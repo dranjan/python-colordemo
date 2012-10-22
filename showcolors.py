@@ -74,7 +74,8 @@ and with absolutely no warranty.  All use is strictly at your own risk.
 
 '''
 
-from sys import stdin, stdout, stderr
+import os
+from sys import stdin, stdout, stderr, version_info
 import re
 import select
 import termios
@@ -112,7 +113,18 @@ re_response = re.compile(crgb)
 
 
 #######################################################################
-# Errors that may be raised by rgb_query
+# Query-related error conditions
+
+class TerminalSetupError(Exception):
+
+    '''
+    We couldn't set up the terminal properly.
+
+    '''
+
+    def __init__(self, fd):
+        Exception.__init__(self, "Couldn't set up terminal on file " +
+                           ("descriptor %d" % fd))
 
 
 class InvalidResponseError(Exception):
@@ -147,19 +159,17 @@ class TerminalQueryContext(object):
 
     '''
 
-    def __init__(self, in_f, out_f):
+    def __init__(self, fd):
         '''
-        in_f and out_f: open file objects associated to an actual TTY.  
+        fd: open file descriptor referring to the terminal we care
+        about.
 
         '''
         self.tc_save = None
-        self.in_f = in_f
-        self.out_f = out_f
-        self.in_fileno = in_f.fileno()
-        self.out_fileno = out_f.fileno()
+        self.fd = fd
 
         self.P = select.poll()
-        self.P.register(self.in_fileno, select.POLLIN)
+        self.P.register(self.fd, select.POLLIN)
 
         self.num_errors = 0
 
@@ -169,9 +179,9 @@ class TerminalQueryContext(object):
         Set up the terminal for queries.
 
         '''
-        self.tc_save = termios.tcgetattr(self.out_fileno)
+        self.tc_save = termios.tcgetattr(self.fd)
 
-        tc = termios.tcgetattr(self.out_fileno)
+        tc = termios.tcgetattr(self.fd)
 
         # Don't echo the terminal's responses
         tc[3] &= ~termios.ECHO
@@ -184,7 +194,12 @@ class TerminalQueryContext(object):
         tc[6][termios.VMIN] = 0
         tc[6][termios.VTIME] = 0
 
-        termios.tcsetattr(self.out_fileno, termios.TCSANOW, tc)
+        termios.tcsetattr(self.fd, termios.TCSANOW, tc)
+
+        # Check if it succeeded
+        if termios.tcgetattr(self.fd) != tc:
+            termios.tcsetattr(self.fd, termios.TCSANOW, self.tc_save)
+            raise TerminalSetupError(self.fd)
 
         return self
 
@@ -197,8 +212,7 @@ class TerminalQueryContext(object):
         self.flush_input()
 
         if self.tc_save is not None:
-            termios.tcsetattr(self.out_fileno, 
-                              termios.TCSANOW, self.tc_save)
+            termios.tcsetattr(self.fd, termios.TCSANOW, self.tc_save)
 
 
     # Wrappers for xterm & urxvt operating system controls.
@@ -295,7 +309,7 @@ class TerminalQueryContext(object):
         while repeat:
             evs = self.P.poll(0)
             if len(evs) > 0:
-                self.in_f.read()
+                os.read(self.fd, 4096)
                 repeat = True
             else:
                 repeat = False
@@ -347,8 +361,7 @@ class TerminalQueryContext(object):
         query = osc + ';'.join([str(k) for k in q]) + ';?' + st
 
         self.flush_input()
-        self.out_f.write(query)
-        self.out_f.flush()
+        os.write(self.fd, query.encode())
 
         # This is addmittedly flawed, since it assumes the entire
         # response will appear in one shot.  It seems to work in
@@ -359,7 +372,9 @@ class TerminalQueryContext(object):
             self.num_errors += 1
             raise NoResponseError(query)
 
-        r = self.in_f.read()
+        r = os.read(self.fd, 4096)
+        if version_info.major >= 3:
+            r = r.decode()
 
         m = re_response.search(r)
 
@@ -463,11 +478,10 @@ class ColorDisplay(TerminalQueryContext):
 
     '''
 
-    def __init__(self, tty_in, tty_out, 
+    def __init__(self, tty_fd,
                  timeout=100, color_level=3, do_query=True):
         '''
-        tty_in, tty_out: open file objects connected to a terminal,
-            where we can write queries and read responses.
+        tty_fd: open file descriptor connected to a terminal.
 
         timeout: same interpretation as in rgb_query. A larger timeout
             will be used a small number of times to test the
@@ -480,7 +494,7 @@ class ColorDisplay(TerminalQueryContext):
             terminal or just use placeholders everywhere
 
         '''
-        TerminalQueryContext.__init__(self, tty_in, tty_out)
+        TerminalQueryContext.__init__(self, tty_fd)
 
         self.timeout = timeout
         self.color_level = color_level
@@ -889,9 +903,7 @@ if __name__ == '__main__':
                     arg_p,
                     "N must belong to %r" % p_choices)
 
-    with ColorDisplay(stdin, stdout,
-                      args.timeout, args.level, args.do_query) as C:
-
+    with ColorDisplay(0, args.timeout, args.level, args.do_query) as C:
         if args.n == 0:
             args.n = C.test_num_colors(args.timeout)
 
