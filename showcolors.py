@@ -98,128 +98,6 @@ csi = "\033["
 reset = csi + 'm'
 
 
-#######################################################################
-# Errors that may be raised by rgb_query
-
-num_errors = 0
-
-
-class InvalidResponseError(Exception):
-
-    '''
-    The terminal's response couldn't be parsed.
-
-    '''
-
-    def __init__(self, q, r):
-        global num_errors
-        num_errors += 1
-        Exception.__init__(self, "Couldn't parse response " + repr(r) +
-                           " to query " + repr(q))
-
-
-class NoResponseError(Exception):
-
-    '''
-    The terminal didn't respond, or we were too impatient.
-
-    '''
-
-    def __init__(self, q):
-        global num_errors
-        num_errors += 1
-        Exception.__init__(self, "Timeout on query " + repr(q))
-
-
-########################################################################
-# Wrappers for xterm & urxvt operating system controls.
-#
-# These codes are all common to xterm and urxvt. Their responses aren't
-# always in the same format (xterm generally being more consistent), but
-# the regular expression used to parse the responses is general enough
-# to work for both.
-#
-# Note: none of these functions is remotely thread-safe.
-
-
-def get_fg(timeout):
-    '''
-    Get the terminal's foreground (text) color as a 6-digit
-    hexadecimal string.
-
-    '''
-    return rgb_query([10], timeout)
-
-
-def get_bg(timeout):
-    '''
-    Get the terminal's background color as a 6-digit hexadecimal
-    string.
-
-    '''
-    return rgb_query([11], timeout)
-
-
-def get_color(a, timeout):
-    '''
-    Get color a as a 6-digit hexadecimal string.
-
-    '''
-    return rgb_query([4, a], timeout)
-
-
-def test_fg(timeout):
-    '''
-    Return True if the terminal responds to the "get foreground" query
-    within the time limit and False otherwise.
-
-    '''
-    return test_rgb_query([10], timeout)
-
-
-def test_bg(timeout):
-    '''
-    Return True if the terminal responds to the "get background" query
-    within the time limit and False otherwise.
-
-    '''
-    return test_rgb_query([11], timeout)
-
-
-def test_color(timeout):
-    '''
-    Return True if the terminal responds to the "get color 0" query
-    within the time limit and False otherwise.
-
-    '''
-    return test_rgb_query([4, 0], timeout)
-
-
-def test_rgb_query(q, timeout):
-    '''
-    Determine if the terminal supports query q.
-
-    Arguments: `q' and `timeout' have the same interpretation as in
-        rgb_query().
-
-    Return: True if the terminal gives a valid response within the
-        time limit and False otherwise.
-
-    This function will not raise InvalidResponseError or
-    NoResponseError, but any other errors raised by rgb_query will
-    be propagated. 
-
-    '''
-    try:
-        rgb_query(q, timeout)
-        return True
-    except (InvalidResponseError, NoResponseError):
-        return False
-
-
-# String to use for color values that couldn't be determined
-rgb_placeholder = '??????'
-
 # This is what we expect the terminal's response to a query for a color
 # to look like.  If we didn't care about urxvt, we could get away with a
 # simpler implementation here, since xterm and vte seem to give pretty 
@@ -232,117 +110,329 @@ crgb = ("\033\\]({ndec};)+rgba?:" +
 
 re_response = re.compile(crgb)
 
-# The problem I'm attempting to work around with this complicated
-# implementation is that if you supply a terminal with a query that it
-# does not recognize or does not have a good response to, it will simply
-# not respond *at all* rather than signaling the error in any way.
-# Moreover, there is a large variation in how long terminals take to
-# respond to valid queries, so it's difficult to know whether the
-# terminal has decided not to respond at all or it needs more time.
-# This is why rgb_query has a user-settable timeout.
 
-P = select.poll()
-P.register(stdin.fileno(), select.POLLIN)
+#######################################################################
+# Errors that may be raised by rgb_query
 
 
-def flush_input():
-    '''
-    Discard any input that can be read at this moment.
+class InvalidResponseError(Exception):
 
     '''
-    repeat = True
-    while repeat:
-        evs = P.poll(0)
-        if len(evs) > 0:
-            stdin.read()
-            repeat = True
+    The terminal's response couldn't be parsed.
+
+    '''
+
+    def __init__(self, q, r):
+        Exception.__init__(self, "Couldn't parse response " + repr(r) +
+                           " to query " + repr(q))
+
+
+class NoResponseError(Exception):
+
+    '''
+    The terminal didn't respond, or we were too impatient.
+
+    '''
+
+    def __init__(self, q):
+        Exception.__init__(self, "Timeout on query " + repr(q))
+
+
+########################################################################
+
+class TerminalQueryContext(object):
+
+    '''
+    Context manager for terminal RGB queries.
+
+    '''
+
+    def __init__(self, in_f, out_f):
+        '''
+        in_f and out_f: open file objects associated to an actual TTY.  
+
+        '''
+        self.tc_save = None
+        self.in_f = in_f
+        self.out_f = out_f
+        self.in_fileno = in_f.fileno()
+        self.out_fileno = out_f.fileno()
+
+        self.P = select.poll()
+        self.P.register(self.in_fileno, select.POLLIN)
+
+        self.num_errors = 0
+
+
+    def __enter__(self):
+        '''
+        Set up the terminal for queries.
+
+        '''
+        self.tc_save = termios.tcgetattr(self.out_fileno)
+
+        tc = termios.tcgetattr(self.out_fileno)
+
+        # Don't echo the terminal's responses
+        tc[3] &= ~termios.ECHO
+
+        # Noncanonical mode (i.e., disable buffering on the terminal
+        # level)
+        tc[3] &= ~termios.ICANON
+
+        # Make input non-blocking
+        tc[6][termios.VMIN] = 0
+        tc[6][termios.VTIME] = 0
+
+        termios.tcsetattr(self.out_fileno, termios.TCSANOW, tc)
+
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        '''
+        Reset the terminal to its original state.
+
+        '''
+        self.flush_input()
+
+        if self.tc_save is not None:
+            termios.tcsetattr(self.out_fileno, 
+                              termios.TCSANOW, self.tc_save)
+
+
+    # Wrappers for xterm & urxvt operating system controls.
+    #
+    # These codes are all common to xterm and urxvt. Their responses
+    # aren't always in the same format (xterm generally being more
+    # consistent), but the regular expression used to parse the
+    # responses is general enough to work for both.
+    #
+    # Note: none of these functions is remotely thread-safe.
+
+
+    def get_fg(self, timeout):
+        '''
+        Get the terminal's foreground (text) color as a 6-digit
+        hexadecimal string.
+
+        '''
+        return self.rgb_query([10], timeout)
+
+
+    def get_bg(self, timeout):
+        '''
+        Get the terminal's background color as a 6-digit hexadecimal
+        string.
+
+        '''
+        return self.rgb_query([11], timeout)
+
+
+    def get_indexed_color(self, a, timeout):
+        '''
+        Get color a as a 6-digit hexadecimal string.
+
+        '''
+        return self.rgb_query([4, a], timeout)
+
+
+    def test_fg(self, timeout):
+        '''
+        Return True if the terminal responds to the "get foreground"
+        query within the time limit and False otherwise.
+
+        '''
+        return self.test_rgb_query([10], timeout)
+
+
+    def test_bg(self, timeout):
+        '''
+        Return True if the terminal responds to the "get background"
+        query within the time limit and False otherwise.
+
+        '''
+        return self.test_rgb_query([11], timeout)
+
+
+    def test_color(self, timeout):
+        '''
+        Return True if the terminal responds to the "get color 0" query
+        within the time limit and False otherwise.
+
+        '''
+        return self.test_rgb_query([4, 0], timeout)
+
+
+    def test_rgb_query(self, q, timeout):
+        '''
+        Determine if the terminal supports query q.
+
+        Arguments: `q' and `timeout' have the same interpretation as in
+            rgb_query().
+
+        Return: True if the terminal gives a valid response within the
+            time limit and False otherwise.
+
+        This function will not raise InvalidResponseError or
+        NoResponseError, but any other errors raised by rgb_query will
+        be propagated. 
+
+        '''
+        try:
+            self.rgb_query(q, timeout)
+            return True
+        except (InvalidResponseError, NoResponseError):
+            return False
+
+
+    def flush_input(self):
+        '''
+        Discard any input that can be read at this moment.
+
+        '''
+        repeat = True
+        while repeat:
+            evs = self.P.poll(0)
+            if len(evs) > 0:
+                self.in_f.read()
+                repeat = True
+            else:
+                repeat = False
+
+
+    # The problem I'm attempting to work around with this complicated
+    # implementation is that if you supply a terminal with a query that
+    # it does not recognize or does not have a good response to, it will
+    # simply not respond *at all* rather than signaling the error in any
+    # way.  Moreover, there is a large variation in how long terminals
+    # take to respond to valid queries, so it's difficult to know
+    # whether the terminal has decided not to respond at all or it needs
+    # more time.  This is why rgb_query has a user-settable timeout.
+
+
+    def rgb_query(self, q, timeout=-1):
+        '''
+        Query a color-valued terminal parameter. 
+
+        Arguments:
+            q: The query code as a sequence of nonnegative integers,
+                i.e., [q0, q1, ...] if the escape sequence in
+                pseudo-Python is
+
+                    "\033]{q0};{q1};...;?\007"
+
+            timeout: how long to wait for a response.  (negative means
+                wait indefinitely if necessary)
+
+        Return: the color value as a 6-digit hexadecimal string.
+
+        Errors:
+            NoResponseError will be raised if the query times out.
+
+            InvalidResponseError will be raised if the terminal's
+            response can't be parsed.
+
+        See 
+            http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
+        ("Operating System Controls") to see the various queries
+        supported by xterm.  Urxvt supports some, but not all, of them,
+        and has a number of its own (see man -s7 urxvt). 
+
+        Warning: before calling this function, make sure the terminal is
+        in noncanonical, non-blocking mode.
+
+        '''
+        query = osc + ';'.join([str(k) for k in q]) + ';?' + st
+
+        self.flush_input()
+        self.out_f.write(query)
+        self.out_f.flush()
+
+        # This is addmittedly flawed, since it assumes the entire
+        # response will appear in one shot.  It seems to work in
+        # practice, though.
+
+        evs = self.P.poll(timeout)
+        if len(evs) == 0:
+            self.num_errors += 1
+            raise NoResponseError(query)
+
+        r = self.in_f.read()
+
+        m = re_response.search(r)
+
+        if not m:
+            self.num_errors += 1
+            raise InvalidResponseError(query, r)
+
+        # (possibly overkill, since I've never seen anything but 4-digit
+        # RGB components in responses from terminals, in which case `nd'
+        # is 4 and `u' is 0xffff, and the following can be simplified as
+        # well (and parse_component can be eliminated))
+        nd = len(m.group(2))
+        u = int('f'*nd, 16)
+
+        # An "rgba"-type reply (for urxvt) is apparently actually
+        #
+        #    rgba:{alpha}/{alpha * red}/{alpha * green}/{alpha * blue}
+        #
+        # I opt to extract the actual RGB values by eliminating alpha.
+        # (In other words, the alpha value is discarded completely in
+        # the reported color value, which is a compromise I make in
+        # order to get an intuitive and compact output.)
+
+        if m.group(5):
+            # There is an alpha component
+            alpha = float(int(m.group(2), 16))/u
+            idx = [3, 4, 6]
         else:
-            repeat = False
+            # There is no alpha component
+            alpha = 1.0
+            idx = [2, 3, 4]
+
+        c_fmt = '%0' + ('%d' % nd) + 'x'
+
+        components = [int(m.group(i), 16) for i in idx]
+        t = tuple(parse_component(c_fmt % (c/alpha)) 
+                  for c in components)
+
+        return "%02X%02X%02X" % t
 
 
-def rgb_query(q, timeout=-1):
-    '''
-    Query a color-valued terminal parameter. 
+    def test_num_colors(self, timeout):
+        '''
+        Attempt to determine the number of colors we are able to query
+        from the terminal.  timeout is measured in milliseconds and has
+        the same interpretation as in rgb_query.  A larger timeout is
+        safer but will cause this function to take proportionally more
+        time.
 
-    Arguments:
-        q: The query code as a sequence of nonnegative integers, i.e.,
-            [q0, q1, ...] if the escape sequence in pseudo-Python is
+        '''
+        # We won't count failed queries in this function, since we're
+        # guaranteed to fail a few.
+        num_errors = self.num_errors
 
-                "\033]{q0};{q1};...;?\007"
-    
-        timeout: how long to wait for a response.  (negative means
-            wait indefinitely if necessary)
+        if not self.test_color(timeout):
+            return 0
+        
+        a = 0
+        b = 1
+        while self.test_rgb_query([4, b], timeout):
+            a = b
+            b += b
 
-    Return: the color value as a 6-digit hexadecimal string.
+        while b - a > 1:
+            c = (a + b)>>1
+            if self.test_rgb_query([4, c], timeout):
+                a = c
+            else:
+                b = c
 
-    Errors:
-        NoResponseError will be raised if the query times out.
+        self.num_errors = num_errors
+        return b
 
-        InvalidResponseError will be raised if the terminal's
-        response can't be parsed.
-
-    See 
-        http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-
-    ("Operating System Controls") to see the various queries
-    supported by xterm.  Urxvt supports some, but not all, of them,
-    and has a number of its own (see man -s7 urxvt). 
-
-    Warning: before calling this function, make sure the terminal is
-    in noncanonical, non-blocking mode.
-
-    '''
-    query = osc + ';'.join([str(k) for k in q]) + ';?' + st
-
-    flush_input()
-    stdout.write(query)
-    stdout.flush()
-
-    # This is addmittedly flawed, since it assumes the entire response
-    # will appear in one shot.  It seems to work in practice, though.
-
-    evs = P.poll(timeout)
-    if len(evs) == 0:
-        raise NoResponseError(query)
-
-    r = stdin.read()
-
-    m = re_response.search(r)
-
-    if not m:
-        raise InvalidResponseError(query, r)
-
-    # (possibly overkill, since I've never seen anything but 4-digit RGB
-    # components in responses from terminals, in which case `nd' is 4
-    # and `u' is 0xffff, and the following can be simplified as well
-    # (and parse_component can be eliminated))
-    nd = len(m.group(2))
-    u = int('f'*nd, 16)
-
-    # An "rgba"-type reply (for urxvt) is apparently actually
-    #
-    #    rgba:{alpha}/{alpha * red}/{alpha * green}/{alpha * blue}
-    #
-    # I opt to extract the actual RGB values by eliminating alpha.  (In
-    # other words, the alpha value is discarded completely in the
-    # reported color value, which is a compromise I make in order to get
-    # an intuitive and compact output.)
-
-    if m.group(5):
-        # There is an alpha component
-        alpha = float(int(m.group(2), 16))/u
-        idx = [3, 4, 6]
-    else:
-        # There is no alpha component
-        alpha = 1.0
-        idx = [2, 3, 4]
-
-    c_fmt = '%0' + ('%d' % nd) + 'x'
-
-    components = [int(m.group(i), 16) for i in idx]
-    t = tuple(parse_component(c_fmt % (c/alpha)) for c in components)
-
-    return "%02X%02X%02X" % t
 
 
 def parse_component(s):
@@ -364,44 +454,21 @@ def parse_component(s):
 
 ########################################################################
 
-def test_num_colors(timeout):
-    '''
-    Attempt to determine the number of colors we are able to query from
-    the terminal.  timeout is measured in milliseconds and has the same
-    interpretation as in rgb_query.  A larger timeout is safer but will
-    cause this function to take proportionally more time.
+class ColorDisplay(TerminalQueryContext):
 
     '''
-    if not test_color(timeout):
-        return 0
-    
-    a = 0
-    b = 1
-    while test_rgb_query([4, b], timeout):
-        a = b
-        b += b
-
-    while b - a > 1:
-        c = (a + b)>>1
-        if test_rgb_query([4, c], timeout):
-            a = c
-        else:
-            b = c
-
-    return b
-
-
-########################################################################
-
-class ColorDisplay(object):
-
-    '''
-    Class for producing a colored display of terminal RGB values.
+    Class for producing a colored display of terminal RGB values.  It's
+    best to use this class as a context manager, which will properly set
+    and reset the terminal's attributes.
 
     '''
 
-    def __init__(self, timeout=100, color_level=3, do_query=True):
+    def __init__(self, tty_in, tty_out, 
+                 timeout=100, color_level=3, do_query=True):
         '''
+        tty_in, tty_out: open file objects connected to a terminal,
+            where we can write queries and read responses.
+
         timeout: same interpretation as in rgb_query. A larger timeout
             will be used a small number of times to test the
             capabilities of the terminal.
@@ -413,12 +480,11 @@ class ColorDisplay(object):
             terminal or just use placeholders everywhere
 
         '''
-        self.timeout=timeout
-        self.color_level=color_level
+        TerminalQueryContext.__init__(self, tty_in, tty_out)
 
-        # try getting the rgb value for color 0 to decide whether to
-        # bother trying to query any more colors.
-        self.do_query = do_query and test_color(self.timeout*5)
+        self.timeout = timeout
+        self.color_level = color_level
+        self.do_query = do_query
 
         def none_factory():
             return None
@@ -433,6 +499,53 @@ class ColorDisplay(object):
 
         for c in '0123456789ABCDEF':
             self.hi[c] = 12
+
+        # String to use for color values that couldn't be determined
+        self.rgb_placeholder = '??????'
+
+
+    def __enter__(self):
+        TerminalQueryContext.__enter__(self)
+
+        # try getting the rgb value for color 0 to decide whether to
+        # bother trying to query any more colors.
+        self.do_query = self.do_query and self.test_color(self.timeout*5)
+
+        if self.color_level >= 1:
+            stdout.write(reset)
+
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.color_level >= 1:
+            stdout.write(reset)
+
+        TerminalQueryContext.__exit__(self, exc_type, exc_value,
+                                      traceback)
+
+
+    def show_fgbg(self):
+        '''
+        Show the foreground and background colors.
+
+        '''
+        if self.do_query:
+            try:
+                bg = self.get_bg(timeout=self.timeout)
+            except (InvalidResponseError, NoResponseError):
+                bg = self.rgb_placeholder
+
+            try:
+                fg = self.get_fg(timeout=self.timeout)
+            except (InvalidResponseError, NoResponseError):
+                fg = self.rgb_placeholder
+        else:
+            bg = self.rgb_placeholder
+            fg = self.rgb_placeholder
+
+        stdout.write("\n    Background: %s\n" % bg)
+        stdout.write("    Foreground: %s\n\n" % fg)
 
 
     def show_ansi(self):
@@ -679,11 +792,11 @@ class ColorDisplay(object):
     def get_color(self, a):
         if self.do_query:
             try:
-                return get_color(a, timeout=self.timeout)
+                return self.get_indexed_color(a, timeout=self.timeout)
             except (InvalidResponseError, NoResponseError):
-                return rgb_placeholder
+                return self.rgb_placeholder
         else:
-            return rgb_placeholder
+            return self.rgb_placeholder
 
 
 ########################################################################
@@ -761,6 +874,10 @@ parser.add_argument(
 
 ########################################################################
 
+def color_display(*args):
+    return ColorDisplay(*args)
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -772,32 +889,11 @@ if __name__ == '__main__':
                     arg_p,
                     "N must belong to %r" % p_choices)
 
-    tc_save = None
-
-    try:
-        tc_save = termios.tcgetattr(stdout.fileno())
-
-        tc = termios.tcgetattr(stdout.fileno())
-
-        # Don't echo the terminal's responses
-        tc[3] &= ~termios.ECHO
-
-        # Noncanonical mode (i.e., disable buffering on the terminal
-        # level)
-        tc[3] &= ~termios.ICANON
-
-        # Make input non-blocking
-        tc[6][termios.VMIN] = 0
-        tc[6][termios.VTIME] = 0
-
-        termios.tcsetattr(stdout.fileno(), termios.TCSANOW, tc)
+    with ColorDisplay(stdin, stdout,
+                      args.timeout, args.level, args.do_query) as C:
 
         if args.n == 0:
-            args.n = test_num_colors(args.timeout)
-            
-            # We are guaranteed to have failed some queries now, but
-            # that isn't meaningful.
-            num_errors = 0
+            args.n = C.test_num_colors(args.timeout)
 
         if not (args.pretty or args.flat):
             if args.n in p_choices:
@@ -809,24 +905,7 @@ if __name__ == '__main__':
             stdout.write(reset)
 
         if args.fgbg:
-            if args.do_query:
-                try:
-                    bg = get_bg(timeout=args.timeout)
-                except (InvalidResponseError, NoResponseError):
-                    bg = rgb_placeholder
-
-                try:
-                    fg = get_fg(timeout=args.timeout)
-                except (InvalidResponseError, NoResponseError):
-                    fg = rgb_placeholder
-            else:
-                bg = rgb_placeholder
-                fg = rgb_placeholder
-
-            stdout.write("\n    Background: %s\n" % bg)
-            stdout.write("    Foreground: %s\n\n" % fg)
-
-        C = ColorDisplay(args.timeout, args.level, args.do_query)
+            C.show_fgbg()
 
         if args.pretty:
             assert args.n in p_choices
@@ -843,17 +922,7 @@ if __name__ == '__main__':
         else:
             C.show_colors(args.n)
 
-        if num_errors > 0:
+        if C.num_errors > 0:
             stderr.write("Warning: not all queries succeeded\n" +
                          "Warning:     (output contains " + 
                          "placeholders and may be inaccurate)\n")
-
-    finally:
-        if args.level >= 1:
-            stdout.write(reset)
-
-        flush_input()
-
-        if tc_save != None:
-            termios.tcsetattr(stdout.fileno(), 
-                              termios.TCSANOW, tc_save)
