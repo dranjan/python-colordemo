@@ -355,7 +355,9 @@ class TerminalQueryContext(object):
         and has a number of its own (see man -s7 urxvt). 
 
         Warning: before calling this function, make sure the terminal is
-        in noncanonical, non-blocking mode.
+        in noncanonical, non-blocking mode.  This can be done easily by
+        calling self.__enter__() or instantiating this instance in a
+        "with" clause, which will do that automatically.
 
         '''
         query = osc + ';'.join([str(k) for k in q]) + ';?' + st
