@@ -389,7 +389,7 @@ class TerminalQueryContext(object):
         # is 4 and `u' is 0xffff, and the following can be simplified as
         # well (and parse_component can be eliminated))
         nd = len(m.group(2))
-        u = int('f'*nd, 16)
+        u = (1 << (nd << 2)) - 1
 
         # An "rgba"-type reply (for urxvt) is apparently actually
         #
