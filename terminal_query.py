@@ -318,23 +318,23 @@ class TerminalQueryContext(object):
         self.flush_input()
         os.write(self.fd, query.encode())
 
-        # This is admittedly flawed, since it assumes the entire
-        # response will appear in one shot.  It seems to work in
-        # practice, though.
+        response = ""
 
-        if not self.P.poll(timeout):
+        if self.P.poll(timeout):
+            while self.P.poll(0):
+                s = os.read(self.fd, 4096)
+                if version_info.major >= 3:
+                    s = s.decode()
+                response += s
+        else:
             self.num_errors += 1
             raise NoResponseError(query)
 
-        r = os.read(self.fd, 4096)
-        if version_info.major >= 3:
-            r = r.decode()
-
-        m = self.re_response.search(r)
+        m = self.re_response.search(response)
 
         if not m:
             self.num_errors += 1
-            raise InvalidResponseError(query, r)
+            raise InvalidResponseError(query, response)
 
         # (possibly overkill, since I've never seen anything but 4-digit
         # RGB components in responses from terminals, in which case `nd'
