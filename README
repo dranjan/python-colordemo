@@ -1,0 +1,19 @@
+termcolors: Python module illustrating RGB queries on xterm-like
+terminals
+
+========================================================================
+Overview of code
+
+colors.py: defines the RGBColor class, which is basically just a
+namedtuple.
+
+terminal_query.py: defines TerminalQueryContext, the main class for
+handling queries to a terminal.  Various terminal properties can be
+queried (depending on the terminal), but only queries for RGB values are
+supported at the moment, since those are the main focus of this project.
+
+color_display.py: defines ColorDisplay, a subclass of
+TerminalQueryContext showing RGB queries put to use in creating color
+tables.
+
+termcolors.py: driver script.
