@@ -204,11 +204,13 @@ class TerminalQueryContext(object):
 
         k = 0
         while limit < 0 or k < limit:
-            c = get_indexed_color(k)
+            c = self.get_indexed_color(k, timeout)
             if c:
                 colors.append(c)
                 k += 1
             else:
+                if limit < 0:
+                    self.num_errors -= 1
                 break
         
         return colors
