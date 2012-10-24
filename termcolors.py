@@ -83,7 +83,7 @@ from color_display import ColorDisplay
 ########################################################################
 # Command-line arguments
 
-timeout_dft = 200
+timeout_dft = -1
 
 parser = ArgumentParser(
         description="Python script to show off terminal colors.",
@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
     with ColorDisplay(0, args.timeout, args.level, args.do_query) as C:
         if args.n == 0:
-            args.n = C.test_num_colors(args.timeout)
+            args.n = C.get_num_colors(args.timeout)
 
         if not (args.pretty or args.flat):
             if args.n in p_choices:

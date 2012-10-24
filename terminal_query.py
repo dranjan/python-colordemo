@@ -158,6 +158,62 @@ class TerminalQueryContext(object):
 
         del self.P
 
+
+    def get_num_colors(self, timeout=-1):
+        '''
+        Attempt to determine the number of colors we are able to query
+        from the terminal.  timeout is measured in milliseconds and has
+        the same interpretation as in guarded_query.  A larger timeout
+        is safer but will cause this function to take proportionally
+        more time.
+
+        '''
+        # We won't count failed queries in this function, since we're
+        # guaranteed to fail a few.
+        num_errors = self.num_errors
+
+        if not self.get_indexed_color(0, timeout):
+            return 0
+
+        a = 0
+        b = 1
+        while self.get_indexed_color(b, timeout):
+            a = b
+            b += b
+
+        while b - a > 1:
+            c = (a + b)>>1
+            if self.get_indexed_color(c, timeout):
+                a = c
+            else:
+                b = c
+
+        self.num_errors = num_errors
+        return b
+
+
+    def get_all_indexed_colors(self, limit, timeout=-1):
+        '''
+        Query as many indexed RGB values as possible up to `limit' 
+        and return them all in a list. `timeout' has the same
+        interpretation as in guarded_query.  A negative limit behaves
+        like infinity.
+
+        '''
+        colors = []
+
+        k = 0
+        while limit < 0 or k < limit:
+            c = get_indexed_color(k)
+            if c:
+                colors.append(c)
+                k += 1
+            else:
+                break
+        
+        return colors
+
+
     # Wrappers for xterm & urxvt operating system controls.
     #
     # These codes are all common to xterm and urxvt. Their responses
@@ -168,7 +224,7 @@ class TerminalQueryContext(object):
     # Note: none of these functions is remotely thread-safe.
 
 
-    def get_fg(self, timeout):
+    def get_fg(self, timeout=-1):
         '''
         Get the terminal's foreground (text) color.
 
@@ -176,7 +232,7 @@ class TerminalQueryContext(object):
         return self.rgb_query([10], timeout)
 
 
-    def get_bg(self, timeout):
+    def get_bg(self, timeout=-1):
         '''
         Get the terminal's background color.
 
@@ -184,61 +240,12 @@ class TerminalQueryContext(object):
         return self.rgb_query([11], timeout)
 
 
-    def get_indexed_color(self, a, timeout):
+    def get_indexed_color(self, a, timeout=-1):
         '''
         Get color number `a'.
 
         '''
         return self.rgb_query([4, a], timeout)
-
-
-    def test_fg(self, timeout):
-        '''
-        Return True if the terminal responds to the "get foreground"
-        query within the time limit and False otherwise.
-
-        '''
-        return self.test_rgb_query([10], timeout)
-
-
-    def test_bg(self, timeout):
-        '''
-        Return True if the terminal responds to the "get background"
-        query within the time limit and False otherwise.
-
-        '''
-        return self.test_rgb_query([11], timeout)
-
-
-    def test_color(self, timeout):
-        '''
-        Return True if the terminal responds to the "get color 0" query
-        within the time limit and False otherwise.
-
-        '''
-        return self.test_rgb_query([4, 0], timeout)
-
-
-    def test_rgb_query(self, q, timeout):
-        '''
-        Determine if the terminal supports query q.
-
-        Arguments: `q' and `timeout' have the same interpretation as in
-            rgb_query().
-
-        Return: True if the terminal gives a valid response within the
-            time limit and False otherwise.
-
-        This function will not raise InvalidResponseError or
-        NoResponseError, but any other errors raised by rgb_query will
-        be propagated. 
-
-        '''
-        try:
-            self.rgb_query(q, timeout)
-            return True
-        except (InvalidResponseError, NoResponseError):
-            return False
 
 
     def flush_input(self):
@@ -249,30 +256,28 @@ class TerminalQueryContext(object):
         while self.P.poll(0):
             os.read(self.fd, 4096)
 
+    # Patterns matching unsigned decimal and hexadecimal integer
+    # literals
+    ndec = "[0-9]+"
+    nhex = "[0-9a-fA-F]+"
+
+    # The "guard" query and its response pattern
+    q_guard = csi + "6n"
+
+    str_guard = "(.*)\033\\[{ndec};{ndec}R".format(**vars())
+    re_guard = re.compile(str_guard)
 
     # This is what we expect the terminal's response to a query for a
     # color to look like.  If we didn't care about urxvt, we could get
     # away with a simpler implementation here, since xterm and vte seem
     # to give pretty consistent and systematic responses.  But I
     # actually use urxvt most of the time, so....
-    ndec = "[0-9]+"
-    nhex = "[0-9a-fA-F]+"
-    crgb = ("\033\\]({ndec};)+rgba?:" +
-            "({nhex})/({nhex})/({nhex})(/({nhex}))?").format(**vars())
+    str_rgb = ("\033\\]({ndec};)+rgba?:(({nhex})/)?" +
+               "({nhex})/({nhex})/({nhex})").format(**vars())
 
-    re_response = re.compile(crgb)
-
-
-    # The problem I'm attempting to work around with this complicated
-    # implementation is that if you supply a terminal with a query that
-    # it does not recognize or does not have a good response to, it will
-    # simply not respond *at all* rather than signaling the error in any
-    # way.  Moreover, there is a large variation in how long terminals
-    # take to respond to valid queries, so it's difficult to know
-    # whether the terminal has decided not to respond at all or it needs
-    # more time.  This is why rgb_query has a user-settable timeout.
-
-
+    re_rgb = re.compile(str_rgb)
+    
+    
     def rgb_query(self, q, timeout=-1):
         '''
         Query a color-valued terminal parameter. 
@@ -284,16 +289,12 @@ class TerminalQueryContext(object):
 
                     "\033]{q0};{q1};...;?\007"
 
-            timeout: how long to wait for a response.  (negative means
-                wait indefinitely if necessary)
+            timeout: how long to wait for a response (same
+                interpretation as in guarded_query).
 
-        Return: the color value as an RGBColor instance.
-
-        Errors:
-            NoResponseError will be raised if the query times out.
-
-            InvalidResponseError will be raised if the terminal's
-            response can't be parsed.
+        Return: the color value as an RGBColor instance.  If the
+            terminal provides an unparseable (or no) response, then None
+            will be returned.  
 
         See 
             http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
@@ -302,44 +303,29 @@ class TerminalQueryContext(object):
         supported by xterm.  Urxvt supports some, but not all, of them,
         and has a number of its own (see man -s7 urxvt). 
 
-        Warning: before calling this function, make sure the terminal is
-        in noncanonical, non-blocking mode.  This can be done easily by
-        calling self.__enter__() or instantiating this instance in a
-        "with" clause, which will do that automatically.
+        self.__enter__ must be called prior to calling this function, or
+        TerminalUninitializedError will be raised.
 
         '''
-        if not hasattr(self, "P"):
-            raise TerminalUninitializedError(self.fd)
-
         query = (self.osc +
                  ';'.join([str(k) for k in q]) + ';?' +
                  self.st)
 
-        self.flush_input()
-        os.write(self.fd, query.encode())
+        try:
+            response = self.guarded_query(query, timeout)
+        except NoResponseError:
+            return None
 
-        response = ""
-
-        if self.P.poll(timeout):
-            while self.P.poll(0):
-                s = os.read(self.fd, 4096)
-                if version_info.major >= 3:
-                    s = s.decode()
-                response += s
-        else:
-            self.num_errors += 1
-            raise NoResponseError(query)
-
-        m = self.re_response.search(response)
+        m = self.re_rgb.match(response)
 
         if not m:
             self.num_errors += 1
-            raise InvalidResponseError(query, response)
+            return None
 
         # (possibly overkill, since I've never seen anything but 4-digit
         # RGB components in responses from terminals, in which case `nd'
         # is 4 and `u' is 0xffff
-        nd = len(m.group(3))
+        nd = len(m.group(4))
         u = (1 << (nd << 2)) - 1
 
         # An "rgba"-type reply (for urxvt) is apparently actually
@@ -350,47 +336,69 @@ class TerminalQueryContext(object):
         # (In other words, the alpha value is discarded completely in
         # the reported color value.)
 
-        if m.group(5):
-            # There is an alpha component
-            alpha = float(int(m.group(2), 16))/u
-            idx = [3, 4, 6]
-        else:
-            # There is no alpha component
-            alpha = 1.0
-            idx = [2, 3, 4]
+        alpha = float(int(m.group(3), 16))/u if m.group(3) else 1.0
 
         return RGBColor(*tuple(int(m.group(i), 16)/(alpha*u) 
-                               for i in idx))
+                               for i in [4, 5, 6]))
 
 
-    def test_num_colors(self, timeout):
+    # If a terminal sees an escape sequence it doesn't like, it will
+    # simply ignore it.  Also, it's hard to predict how long a terminal
+    # will take to respond to a query it does like.  However, some
+    # escape sequences, like "\033[6n", will produce a predictable
+    # response on *most* (but not all) terminals, and this fact can be
+    # used to test for the absence of a response to a particular query 
+    # on such terminals. 
+
+    def guarded_query(self, q, timeout=-1):
         '''
-        Attempt to determine the number of colors we are able to query
-        from the terminal.  timeout is measured in milliseconds and has
-        the same interpretation as in rgb_query.  A larger timeout is
-        safer but will cause this function to take proportionally more
-        time.
+        Send the terminal query string `q' and return the terminal's
+        response.
+
+        Arguments:
+            q: the query string to send to the terminal.
+
+            timeout: how many milliseconds to wait for a response, a
+                negative number meaning "infinite".  If the terminal
+                responds to the "device status report" (DSR) sequence
+                "\033[6n", then it is safe to use an infinite timeout
+                even if you don't know if query `q' will succeed.
+
+        Return: The terminal's response to the query as a string.
+
+        Errors:
+            NoResponseError will be raised if the query times out.
+
+            TerminalUninitializedError will be raised if this instance's
+            context has not been __enter__-ed.
+
+        If your terminal gives a nonstandard response to the DSR
+        sequence, then you should subclass this class and redefine the
+        `re_guard' member variable.  You can also redefine `q_guard' to
+        something other than "\033[6n".
 
         '''
-        # We won't count failed queries in this function, since we're
-        # guaranteed to fail a few.
-        num_errors = self.num_errors
+        if not hasattr(self, "P"):
+            raise TerminalUninitializedError(self.fd)
 
-        if not self.test_color(timeout):
-            return 0
-        
-        a = 0
-        b = 1
-        while self.test_rgb_query([4, b], timeout):
-            a = b
-            b += b
+        query = q + self.q_guard
 
-        while b - a > 1:
-            c = (a + b)>>1
-            if self.test_rgb_query([4, c], timeout):
-                a = c
-            else:
-                b = c
+        self.flush_input()
+        os.write(self.fd, query.encode())
 
-        self.num_errors = num_errors
-        return b
+        response = ""
+
+        while self.P.poll(timeout):
+            #while self.P.poll(0):
+            s = os.read(self.fd, 4096)
+            if version_info.major >= 3:
+                s = s.decode()
+            response += s
+
+            m = self.re_guard.match(response)
+
+            if m:
+                return m.group(1)
+        else:
+            self.num_errors += 1
+            raise NoResponseError(query)

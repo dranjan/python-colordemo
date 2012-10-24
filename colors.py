@@ -13,7 +13,7 @@ class RGBColor(RGBColorBase):
     fmt = "rgb:{:04x}/{:04x}/{:04x}"
     scale = 0xffff
 
-    def format(self, fmt, scale, fn=int):
+    def format(self, fmt, scale, fn=round):
         '''
         fmt is a Python format string.  The color components can be
         named in three ways:
@@ -26,8 +26,8 @@ class RGBColor(RGBColorBase):
             "({0:02x}, {1:02x}, {2:02x})"
             "({r:02x}, {g:02x}, {b:02x})"
 
-        Each components will be multiplied by "scale", and then the 
-        optional function "fn" will be applied (default: `int').
+        Each component will be multiplied by "scale", and then the 
+        optional function "fn" will be applied (default: `round').
 
         '''
         (rx, gx, bx) = (fn(self.r*scale),
@@ -39,3 +39,9 @@ class RGBColor(RGBColorBase):
 
     def __str__(self):
         return self.format(self.fmt, self.scale)
+
+
+    def __bool__(self):
+        return (self.r >= 0 and self.r <= 1 and
+                self.g >= 0 and self.g <= 1 and
+                self.b >= 0 and self.b <= 1)

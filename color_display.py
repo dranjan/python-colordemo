@@ -59,7 +59,8 @@ class ColorDisplay(TerminalQueryContext):
 
         # try getting the rgb value for color 0 to decide whether to
         # bother trying to query any more colors.
-        self.do_query = self.do_query and self.test_color(self.timeout*5)
+        self.do_query = (self.do_query and 
+                         self.get_indexed_color(0, self.timeout*2))
 
         if self.color_level >= 1:
             stdout.write(self.reset)
@@ -81,17 +82,8 @@ class ColorDisplay(TerminalQueryContext):
 
         '''
         if self.do_query:
-            try:
-                c = self.get_bg(timeout=self.timeout)
-                bg = c.format(self.fmt, self.scale)
-            except TerminalQueryError:
-                bg = self.rgb_placeholder
-
-            try:
-                c = self.get_fg(timeout=self.timeout)
-                fg = c.format(self.fmt, self.scale)
-            except TerminalQueryError:
-                fg = self.rgb_placeholder
+            bg = self.format(self.get_bg(timeout=self.timeout))
+            fg = self.format(self.get_fg(timeout=self.timeout))
         else:
             bg = self.rgb_placeholder
             fg = self.rgb_placeholder
@@ -342,11 +334,16 @@ class ColorDisplay(TerminalQueryContext):
 
     def get_color(self, a):
         if self.do_query:
-            try:
-                c = self.get_indexed_color(a, timeout=self.timeout)
-            except TerminalQueryError:
-                return self.rgb_placeholder
+            c = self.get_indexed_color(a, timeout=self.timeout)
+            return self.format(c)
         else:
             return self.rgb_placeholder
 
-        return c.format(self.fmt, self.scale)
+
+    def format(self, c):
+        '''
+        Return a formatted string representing RGBColor instance c.
+
+        '''
+        return (c.format(self.fmt, self.scale) if c else
+                self.rgb_placeholder)
