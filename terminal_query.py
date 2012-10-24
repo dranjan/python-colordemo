@@ -34,20 +34,6 @@ class TerminalSetupError(TerminalQueryError):
              ("descriptor %d" % fd)))
 
 
-class InvalidResponseError(TerminalQueryError):
-
-    '''
-    The terminal's response couldn't be parsed.
-
-    '''
-
-    def __init__(self, q, r):
-        TerminalQueryError.__init__(
-            self, 
-            ("Couldn't parse response " + repr(r) +
-             " to query " + repr(q)))
-
-
 class NoResponseError(TerminalQueryError):
 
     '''
@@ -263,7 +249,7 @@ class TerminalQueryContext(object):
     ndec = "[0-9]+"
     nhex = "[0-9a-fA-F]+"
 
-    # The "guard" query and its response pattern
+    # The "guard" query and its response pattern.
     q_guard = csi + "6n"
 
     str_guard = "(.*)\033\\[{ndec};{ndec}R".format(**vars())
@@ -352,7 +338,7 @@ class TerminalQueryContext(object):
     # used to test for the absence of a response to a particular query 
     # on such terminals. 
 
-    def guarded_query(self, q, timeout=-1):
+    def guarded_query(self, q, timeout=-1, flush=True):
         '''
         Send the terminal query string `q' and return the terminal's
         response.
@@ -361,10 +347,14 @@ class TerminalQueryContext(object):
             q: the query string to send to the terminal.
 
             timeout: how many milliseconds to wait for a response, a
-                negative number meaning "infinite".  If the terminal
-                responds to the "device status report" (DSR) sequence
-                "\033[6n", then it is safe to use an infinite timeout
-                even if you don't know if query `q' will succeed.
+                negative number meaning "infinite".  
+
+            flush: whether to discard waiting input before sending the
+                query.  It usually makes sense to do this, but note that
+                the terminal may still send seemingly unsolicited data
+                (possibly in response to an earlier query) after the
+                input is flushed, so flushing the input does not
+                provide any guarantees.
 
         Return: The terminal's response to the query as a string.
 
@@ -374,24 +364,20 @@ class TerminalQueryContext(object):
             TerminalUninitializedError will be raised if this instance's
             context has not been __enter__-ed.
 
-        If your terminal gives a nonstandard response to the DSR
-        sequence, then you should subclass this class and redefine the
-        `re_guard' member variable.  You can also redefine `q_guard' to
-        something other than "\033[6n".
-
         '''
         if not hasattr(self, "P"):
             raise TerminalUninitializedError(self.fd)
 
         query = q + self.q_guard
 
-        self.flush_input()
+        if flush:
+            self.flush_input()
+
         os.write(self.fd, query.encode())
 
         response = ""
 
         while self.P.poll(timeout):
-            #while self.P.poll(0):
             s = os.read(self.fd, 4096)
             if version_info.major >= 3:
                 s = s.decode()
