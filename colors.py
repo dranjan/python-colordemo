@@ -18,25 +18,22 @@
 
 from collections import namedtuple
 
-RGBColorBase = namedtuple('RGBColorBase', ('r', 'g', 'b'))
+RGBAColorBase = namedtuple('RGBAColorBase', ('r', 'g', 'b', 'a'))
 
-class RGBColor(RGBColorBase):
+class RGBAColor(RGBAColorBase):
     
     '''
-    The usual representation for a color value as a triple of numbers in
-    the range [0, 1].
+    The usual representation for a color value plus alpha 
+    as a quadruple of numbers in the range [0, 1].
 
     '''
-
-    fmt = "rgb:{:04x}/{:04x}/{:04x}"
-    scale = 0xffff
 
     def format(self, fmt, scale, fn=round):
         '''
         fmt is a Python format string.  The color components can be
         named in three ways:
-            - using the letter names 'r', 'g', and 'b'
-            - using the positional names 0, 1, and 2
+            - using the letter names 'r', 'g', 'b', and 'a'
+            - using the positional names 0, 1, 2, and 3
             - implicitly
 
         For example, the following values of `fmt' are all equivalent:
@@ -53,10 +50,6 @@ class RGBColor(RGBColorBase):
                         fn(self.b*scale))
 
         return fmt.format(rx, gx, bx, r=rx, g=gx, b=bx)
-
-
-    def __str__(self):
-        return self.format(self.fmt, self.scale)
 
 
     def __bool__(self):
