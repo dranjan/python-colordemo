@@ -1,5 +1,23 @@
 #!/usr/bin/python
 
+#   Copyright 2012 Darsh Ranjan
+#
+#   This file is part of termcolors.
+#
+#   termcolors is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   termcolors is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with termcolors.  If not, see
+#   <http://www.gnu.org/licenses/>.
+
 '''
 This is a Python script to show off your terminal ANSI colors (or more
 colors, if your terminal has them).  It works on both Python 2.7 and
@@ -66,11 +84,6 @@ tmux emulate a 256 color terminal independently of the terminal(s)
 to which they are attached, which is very apparent if you run the script
 with 256-color output on a screen session attached to a terminal with 8-
 or 16-color terminfo (or with $TERM set to such).
-
-This code is licensed under the terms of the GNU General Public License:
-    http://www.gnu.org/licenses/gpl-3.0.html
-
-and with absolutely no warranty.  All use is strictly at your own risk.
 
 '''
 
