@@ -1,6 +1,67 @@
 termcolors: Python module illustrating RGB queries on xterm-like
 terminals
 
+Author: Darsh Ranjan
+Email: Take my handle (dranjan) and follow it with "at math dot berkeley
+    dot edu".
+
+========================================================================
+Overview of functionality
+
+This Python module allows you to programmatically determine the RGB
+values of some terminals' ANSI colors (or more colors, if the terminal
+has them).  The
+functions must be run from the terminal whose colors you want to
+determine, and not from within a screen or tmux session (see below for
+more on this).  Not all terminal types are supported.
+
+This module is intended to work on both Python 2.7 and Python 3.x, but
+it is currently broken on both.
+
+Fully supported terminals:
+
+    xterm
+    urxvt
+
+For these terminals, all of the query functions work, including
+foreground/background colors.
+
+Mostly supported terminals: pretty much all VTE-based terminals. This
+includes:
+
+    vte
+    Terminal (XFCE)
+    gnome-terminal
+    terminator
+    tilda
+
+and many more.  These are on "mostly" status because I don't know how to
+query their foreground and background colors.  Everything else works,
+though, albeit with noticeable slowness, which may be beyond this
+module's control.
+
+Unsupported terminals: most other terminals I've tried.  These include:
+
+    ajaxterm
+    Linux virtual console
+    terminology (Enlightenment)
+    konsole (KDE)
+    Eterm (Enlightenment)
+    (etc.)
+
+These terminals do not seem to allow their colors to be queried
+dynamically.  There may be other ways to obtain RGB values for some of
+these terminals, such as parsing configuration files or perhaps parsing
+the outpuf of xrdb --query.  I have no plans to implement any of these.
+
+Note regarding screen and tmux: a terminal's colors cannot be queried
+from a screen or tmux session running on that terminal, even if the
+underlying terminal is fully supported.  This is a fundamental
+limitation.  While it may appear that a screen session is running on a
+particular terminal, it isn't.  Actually, a screen session can be
+attached to more than one terminal, so the screen session itself
+technically doesn't even have any well defined RGB values.  
+
 ========================================================================
 Overview of code
 
@@ -16,4 +77,5 @@ color_display.py: defines ColorDisplay, a subclass of
 TerminalQueryContext showing RGB queries put to use in creating color
 tables.
 
-termcolors.py: driver script.
+termcolors-demo.py: driver script showing most of the functionality in
+action.

@@ -105,10 +105,10 @@ class TerminalQueryContext(object):
     reset = csi + 'm'
 
 
-    def __init__(self, fd):
+    def __init__(self, fd=0):
         '''
         fd: open file descriptor referring to the terminal we care
-        about.
+        about.  The default (0) is almost always correct.
 
         '''
         self.tc_save = None

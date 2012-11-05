@@ -60,7 +60,10 @@ I've tried.  These include:
     (etc.)
 
 For these terminals, the script can output a color table just fine, but
-without RGB values.
+without RGB values.  Note regarding terminology: you need to supply a
+nonnegative timeout (e.g., -t 0), or the script will hang indefinitely.
+(Apparently, terminology doesn't implement *any* queries, breaking
+TerminalQueryContext.guarded_query.)
 
 Unsupported terminals:
 

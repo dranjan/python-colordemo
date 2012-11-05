@@ -16,10 +16,10 @@
 #   along with termcolors.  If not, see
 #   <http://www.gnu.org/licenses/>.
 
-from terminal_query import TerminalQueryContext, TerminalQueryError
 from collections import defaultdict
 from sys import (stdin, stdout, stderr)
 
+from terminal_query import TerminalQueryContext, TerminalQueryError
 
 class ColorDisplay(TerminalQueryContext):
 
