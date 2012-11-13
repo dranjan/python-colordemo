@@ -90,8 +90,11 @@ or 16-color terminfo (or with $TERM set to such).
 
 '''
 
-from sys import (stdin, stdout, stderr)
+from sys import (stdin, stdout, stderr, path)
 from argparse import (ArgumentParser, ArgumentError)
+from os.path import dirname
+
+path.append(dirname(__file__))
 
 from color_display import ColorDisplay
 
