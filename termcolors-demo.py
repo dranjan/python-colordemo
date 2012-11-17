@@ -94,9 +94,7 @@ from sys import (stdin, stdout, stderr, path)
 from argparse import (ArgumentParser, ArgumentError)
 from os.path import dirname
 
-path.append(dirname(__file__))
-
-from color_display import ColorDisplay
+from termcolors.color_display import ColorDisplay
 
 
 ########################################################################

@@ -22,7 +22,7 @@ import select
 import termios
 from sys import version_info
 
-from colors import RGBAColor
+from termcolors.colors import RGBAColor
 
 #######################################################################
 # Query-related error conditions
