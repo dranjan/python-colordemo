@@ -10,13 +10,11 @@ Overview of functionality
 
 This Python module allows you to programmatically determine the RGB
 values of some terminals' ANSI colors (or more colors, if the terminal
-has them).  The
-functions must be run from the terminal whose colors you want to
-determine, and not from within a screen or tmux session (see below for
-more on this).  Not all terminal types are supported.
+has them).  The functions must be run from the terminal whose colors you
+want to determine, and not from within a screen or tmux session (see
+below for more on this).  Not all terminal types are supported.
 
-This module is intended to work on both Python 2.7 and Python 3.x, but
-it is currently broken on both.
+This module is intended to work on both Python 2.7 and Python 3.x.
 
 Fully supported terminals:
 
