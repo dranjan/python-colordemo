@@ -65,8 +65,8 @@ technically doesn't even have any well defined RGB values.
 ========================================================================
 Overview of code
 
-colors.py: defines the RGBColor class, which is basically just a
-namedtuple.
+colors.py: defines the RGBAColor class, which is currently a simple
+collections.namedtuple.
 
 terminal_query.py: defines TerminalQueryContext, the main class for
 handling queries to a terminal.  Various terminal properties can be

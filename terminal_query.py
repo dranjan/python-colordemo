@@ -22,7 +22,7 @@ import select
 import termios
 from sys import version_info
 
-from colors import RGBColor
+from colors import RGBAColor
 
 #######################################################################
 # Query-related error conditions
@@ -298,7 +298,7 @@ class TerminalQueryContext(object):
             timeout: how long to wait for a response (same
                 interpretation as in guarded_query).
 
-        Return: the color value as an RGBColor instance.  If the
+        Return: the color value as an RGBAColor instance.  If the
             terminal provides an unparseable (or no) response, then None
             will be returned.  
 
@@ -344,8 +344,13 @@ class TerminalQueryContext(object):
 
         alpha = float(int(m.group(3), 16))/u if m.group(3) else 1.0
 
-        return RGBColor(*tuple(int(m.group(i), 16)/(alpha*u) 
-                               for i in [4, 5, 6]))
+        if alpha > 0:
+            (r, g, b) = (int(m.group(i), 16)/(alpha*u)
+                         for i in [4, 5, 6])
+
+            return RGBAColor(r, g, b, alpha)
+        else:
+            return RGBAColor(0.0, 0.0, 0.0, 0.0)
 
 
     # If a terminal sees an escape sequence it doesn't like, it will

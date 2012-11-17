@@ -364,5 +364,8 @@ class ColorDisplay(TerminalQueryContext):
         Return a formatted string representing RGBColor instance c.
 
         '''
-        return (c.format(self.fmt, self.scale) if c else
-                self.rgb_placeholder)
+        if c:
+            return "%02X%02X%02X" % (c.r*0xffff/256, c.g*0xffff/256,
+                                     c.b*0xffff/256)
+        else:
+            return self.rgb_placeholder
