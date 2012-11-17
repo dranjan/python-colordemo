@@ -19,7 +19,7 @@
 from collections import defaultdict
 from sys import (stdin, stdout, stderr)
 
-from terminal_query import TerminalQueryContext, TerminalQueryError
+from termcolors.terminal_query import TerminalQueryContext, TerminalQueryError
 
 
 class ColorDisplay(TerminalQueryContext):
