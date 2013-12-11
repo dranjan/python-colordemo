@@ -11,8 +11,8 @@ Overview of functionality
 This Python module allows you to programmatically determine the RGB
 values of some terminals' ANSI colors (or more colors, if the terminal
 has them).  The functions must be run from the terminal whose colors you
-want to determine, and not from within a screen or tmux session (see
-below for more on this).  Not all terminal types are supported.
+want to determine, and not from within a screen session (tmux sessions are
+supported, see below for more on this). Not all terminal types are supported.
 
 This module is intended to work on both Python 2.7 and Python 3.x.
 
@@ -53,12 +53,13 @@ these terminals, such as parsing configuration files or perhaps parsing
 the outpuf of xrdb --query.  I have no plans to implement any of these.
 
 Note regarding screen and tmux: a terminal's colors cannot be queried
-from a screen or tmux session running on that terminal, even if the
-underlying terminal is fully supported.  This is a fundamental
-limitation.  While it may appear that a screen session is running on a
-particular terminal, it isn't.  Actually, a screen session can be
-attached to more than one terminal, so the screen session itself
-technically doesn't even have any well defined RGB values.  
+from a screen session running on that terminal, even if the
+underlying terminal is fully supported.  This limitation does not
+apply for tmux, because it has a mechanism to forward queries
+to the actual terminal.  While it may appear that a screen session
+is running on a particular terminal, it isn't.  Actually, a screen
+session can be attached to more than one terminal, so the screen
+session itself technically doesn't even have any well defined RGB values.  
 
 ========================================================================
 Overview of code

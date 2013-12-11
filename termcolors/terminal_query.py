@@ -393,6 +393,13 @@ class TerminalQueryContext(object):
 
         query = q + self.q_guard
 
+        # tmux can be used like a proxy to send queries to the actual terminal.
+        # The format of proxy query is:
+        #     \033Ptmux;{original query}\0\033\\
+        # Also, all the \033 of the original query must be escaped with \033.
+        if (os.getenv("TMUX")):
+            query = "\033Ptmux;" + query.replace("\033", "\033\033") + "\0\033\\"
+
         if flush:
             self.flush_input()
 
