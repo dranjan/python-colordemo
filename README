@@ -10,8 +10,8 @@ Overview of functionality
 This Python module allows you to programmatically determine the RGB
 values of some terminals' ANSI colors (or more colors, if the terminal
 has them).  The functions must be run from the terminal whose colors you
-want to determine, and not from within a screen session (tmux sessions are
-supported, see below for more on this). Not all terminal types are supported.
+want to determine, and with caveats if within a screen or tmux session
+(see below for more on this).  Not all terminal types are supported.
 
 This module is intended to work on both Python 2.7 and Python 3.x.
 
@@ -51,14 +51,18 @@ dynamically.  There may be other ways to obtain RGB values for some of
 these terminals, such as parsing configuration files or perhaps parsing
 the outpuf of xrdb --query.  I have no plans to implement any of these.
 
-Note regarding screen and tmux: a terminal's colors cannot be queried
-from a screen session running on that terminal, even if the
-underlying terminal is fully supported.  This limitation does not
-apply for tmux, because it has a mechanism to forward queries
-to the actual terminal.  While it may appear that a screen session
-is running on a particular terminal, it isn't.  Actually, a screen
-session can be attached to more than one terminal, so the screen
-session itself technically doesn't even have any well defined RGB values.  
+Note regarding screen and tmux: it generally doesn't make sense to query
+a terminal from inside a screen or tmux session, since a single screen
+or tmux session can be attached to multiple terminals.  However, in the
+special case of being attached to a single terminal, it is possible
+because tmux and screen provide (different) methods to pass control
+sequences through to the attached terminal.  Of course, it makes no
+sense to try this if there are multiple terminals attached, and you
+should expect crazy results if you do.  Thus, forwarding queries through
+screen or tmux is currently an opt-in feature (see the "screen_forward"
+optional argument in TerminalQueryContext.__init__ or the
+--screen-forward/--tmux-forward options in termcolors-demo.py).  This
+will fail inside a nested screen or tmux session.
 
 ========================================================================
 Overview of code
