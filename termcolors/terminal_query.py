@@ -105,7 +105,7 @@ class TerminalQueryContext(object):
     reset = csi + 'm'
 
 
-    def __init__(self, fd=0):
+    def __init__(self, fd=0, tmux_forward=False):
         '''
         fd: open file descriptor referring to the terminal we care
         about.  The default (0) is almost always correct.
@@ -115,6 +115,8 @@ class TerminalQueryContext(object):
         self.fd = fd
 
         self.num_errors = 0
+
+        self.tmux_forward = tmux_forward
 
 
     def __enter__(self):
@@ -393,12 +395,15 @@ class TerminalQueryContext(object):
 
         query = q + self.q_guard
 
-        # tmux can be used like a proxy to send queries to the actual terminal.
-        # The format of proxy query is:
+        # tmux can be used like a proxy to send queries to the actual
+        # terminal.  The format of proxy query is:
         #     \033Ptmux;{original query}\0\033\\
-        # Also, all the \033 of the original query must be escaped with \033.
-        if (os.getenv("TMUX")):
-            query = "\033Ptmux;" + query.replace("\033", "\033\033") + "\0\033\\"
+        # Also, all the \033 of the original query must be escaped with
+        # \033.
+        if self.tmux_forward and os.getenv("TMUX"):
+            query = ("\033Ptmux;" +
+                     query.replace("\033", "\033\033") +
+                     "\0\033\\")
 
         if flush:
             self.flush_input()

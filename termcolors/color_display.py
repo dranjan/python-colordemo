@@ -32,7 +32,8 @@ class ColorDisplay(TerminalQueryContext):
     '''
 
     def __init__(self, tty_fd,
-                 timeout=100, color_level=3, do_query=True):
+                 timeout=100, color_level=3, do_query=True,
+                 tmux_forward=False):
         '''
         tty_fd: open file descriptor connected to a terminal.
 
@@ -47,7 +48,7 @@ class ColorDisplay(TerminalQueryContext):
             terminal or just use placeholders everywhere.
 
         '''
-        TerminalQueryContext.__init__(self, tty_fd)
+        TerminalQueryContext.__init__(self, tty_fd, tmux_forward)
 
         self.timeout = timeout
         self.color_level = color_level

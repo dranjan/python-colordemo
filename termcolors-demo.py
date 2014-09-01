@@ -169,6 +169,11 @@ parser.add_argument(
         help="choose how much color to use in the output.  " +
              "(0 = no color; 3 = most color [default])")
 
+parser.add_argument(
+        '--tmux-forward',
+        action='store_true', default=False,
+        help="attempt to pass terminal queries through a tmux " +
+             "session (ignored if this is not a tmux session)")
 
 ########################################################################
 
@@ -183,7 +188,9 @@ if __name__ == '__main__':
                     arg_p,
                     "N must belong to %r" % p_choices)
 
-    with ColorDisplay(0, args.timeout, args.level, args.do_query) as C:
+    with ColorDisplay(0, args.timeout, args.level, args.do_query,
+                      args.tmux_forward) as C:
+
         if args.n == 0:
             args.n = C.get_num_colors(args.timeout)
 
