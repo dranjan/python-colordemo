@@ -33,7 +33,7 @@ class ColorDisplay(TerminalQueryContext):
 
     def __init__(self, tty_fd,
                  timeout=100, color_level=3, do_query=True,
-                 tmux_forward=False):
+                 screen_forward=False):
         '''
         tty_fd: open file descriptor connected to a terminal.
 
@@ -47,8 +47,11 @@ class ColorDisplay(TerminalQueryContext):
         do_query: whether to attempt to query RGB values from the
             terminal or just use placeholders everywhere.
 
+        screen_forward: whether to attempt to forward queries through a
+            screen or tmux session if we are in one.
+
         '''
-        TerminalQueryContext.__init__(self, tty_fd, tmux_forward)
+        TerminalQueryContext.__init__(self, tty_fd, screen_forward)
 
         self.timeout = timeout
         self.color_level = color_level

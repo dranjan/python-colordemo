@@ -78,15 +78,18 @@ ajaxterm is similar, but not as bad.
 If a terminal isn't mentioned here, I probably haven't tried it.  Attempt
 at your own risk!
 
-Note regarding screen/tmux: this script can theoretically be run from a
-screen or tmux session, but you will not get any RGB values in the
-output (indeed, a screen session can be opened on multiple terminals
-simultaneously, so there typically isn't a well defined color value for
-a given index).  However, it's interesting to observe that screen and
-tmux emulate a 256 color terminal independently of the terminal(s)
-to which they are attached, which is very apparent if you run the script
-with 256-color output on a screen session attached to a terminal with 8-
-or 16-color terminfo (or with $TERM set to such).
+Note regarding screen/tmux: this script can be run from a screen or tmux
+session, but you will not get any RGB values in the output unless you
+use --screen-forward/--tmux-forward.  Using either option will provide
+RGB values if the underlying terminal supports it and your screen/tmux
+session is attached to a single terminal and is not nested.  If you are
+attached to multiple terminals, craziness will likely result, hence why
+these options are not set by default.  Omitting those options, though,
+it's interesting to observe that screen and tmux emulate a 256 color
+terminal independently of the terminal(s) to which they are attached,
+which is very apparent if you run the script with 256-color output on a
+screen session attached to a terminal with 8- or 16-color terminfo (or
+with $TERM set to such).
 
 '''
 
@@ -170,7 +173,7 @@ parser.add_argument(
              "(0 = no color; 3 = most color [default])")
 
 parser.add_argument(
-        '--tmux-forward',
+        '--screen-forward', '--tmux-forward',
         action='store_true', default=False,
         help="attempt to pass terminal queries through a tmux " +
              "session (ignored if this is not a tmux session)")
@@ -189,7 +192,7 @@ if __name__ == '__main__':
                     "N must belong to %r" % p_choices)
 
     with ColorDisplay(0, args.timeout, args.level, args.do_query,
-                      args.tmux_forward) as C:
+                      args.screen_forward) as C:
 
         if args.n == 0:
             args.n = C.get_num_colors(args.timeout)

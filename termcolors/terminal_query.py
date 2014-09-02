@@ -105,7 +105,7 @@ class TerminalQueryContext(object):
     reset = csi + 'm'
 
 
-    def __init__(self, fd=0, tmux_forward=False):
+    def __init__(self, fd=0, screen_forward=False):
         '''
         fd: open file descriptor referring to the terminal we care
         about.  The default (0) is almost always correct.
@@ -116,7 +116,7 @@ class TerminalQueryContext(object):
 
         self.num_errors = 0
 
-        self.tmux_forward = tmux_forward
+        self.screen_forward = screen_forward
 
 
     def __enter__(self):
@@ -395,15 +395,30 @@ class TerminalQueryContext(object):
 
         query = q + self.q_guard
 
-        # tmux can be used like a proxy to send queries to the actual
-        # terminal.  The format of proxy query is:
-        #     \033Ptmux;{original query}\0\033\\
-        # Also, all the \033 of the original query must be escaped with
-        # \033.
-        if self.tmux_forward and os.getenv("TMUX"):
-            query = ("\033Ptmux;" +
-                     query.replace("\033", "\033\033") +
-                     "\0\033\\")
+        if self.screen_forward:
+            if os.getenv("TMUX"):
+                # We seem to be in a tmux session.  tmux can be used
+                # like a proxy to send queries to the actual terminal.
+                # The format of proxy query is:
+                #
+                #     \033Ptmux;{original query}\0\033\\
+                #
+                # Also, all the \033 of the original query must be
+                # escaped with \033.
+                query = ("\033Ptmux;" +
+                         query.replace("\033", "\033\033") +
+                         "\0\033\\")
+
+            elif os.getenv("STY"):
+                # We seem to be in a screen session.  Like tmux, screen
+                # can also send queries through to the terminal.  Unlike
+                # tmux, \033 does not need to be (cannot be???) escaped.
+                #
+                # XXX Is there a better way to "escape" string
+                # terminators?
+                query = ("\033P" +
+                         query.replace("\033\\", "\033\033\\\033P\\") +
+                         "\033\\")
 
         if flush:
             self.flush_input()
