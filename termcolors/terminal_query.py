@@ -1,4 +1,4 @@
-#   Copyright 2012 Darsh Ranjan
+#   Copyright 2012-2014 Darsh Ranjan, oblique
 #
 #   This file is part of termcolors.
 #
@@ -278,8 +278,7 @@ class TerminalQueryContext(object):
     # This is what we expect the terminal's response to a query for a
     # color to look like.  If we didn't care about urxvt, we could get
     # away with a simpler implementation here, since xterm and vte seem
-    # to give pretty consistent and systematic responses.  But I
-    # actually use urxvt most of the time, so....
+    # to give pretty consistent and systematic responses.
     str_rgb = ("\033\\]({ndec};)+rgba?:(({nhex})/)?" +
                "({nhex})/({nhex})/({nhex})").format(**vars())
 
@@ -330,17 +329,16 @@ class TerminalQueryContext(object):
             self.num_errors += 1
             return None
 
-        # (possibly overkill, since I've never seen anything but 4-digit
-        # RGB components in responses from terminals, in which case `nd'
-        # is 4 and `u' is 0xffff
-        nd = len(m.group(4))
-        u = (1 << (nd << 2)) - 1
+        # (possibly overkill, since all terminals that reply seem to
+        # give 4-digit RGB components, in which case `nd' is 4 and `u'
+        # is 0xffff)
+        nd = len(m.group(4)) u = (1 << (nd << 2)) - 1
 
         # An "rgba"-type reply (for urxvt) is apparently actually
         #
         #    rgba:{alpha}/{alpha * red}/{alpha * green}/{alpha * blue}
         #
-        # I opt to extract the actual RGB values by eliminating alpha.
+        # We opt to extract the actual RGB values by eliminating alpha.
         # (In other words, the alpha value is discarded completely in
         # the reported color value.)
 
@@ -353,7 +351,6 @@ class TerminalQueryContext(object):
             return RGBAColor(r, g, b, alpha)
         else:
             return RGBAColor(0.0, 0.0, 0.0, 0.0)
-
 
     # If a terminal sees an escape sequence it doesn't like, it will
     # simply ignore it.  Also, it's hard to predict how long a terminal
