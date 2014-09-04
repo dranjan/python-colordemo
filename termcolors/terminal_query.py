@@ -332,7 +332,8 @@ class TerminalQueryContext(object):
         # (possibly overkill, since all terminals that reply seem to
         # give 4-digit RGB components, in which case `nd' is 4 and `u'
         # is 0xffff)
-        nd = len(m.group(4)) u = (1 << (nd << 2)) - 1
+        nd = len(m.group(4))
+        u = (1 << (nd << 2)) - 1
 
         # An "rgba"-type reply (for urxvt) is apparently actually
         #
