@@ -10,6 +10,5 @@ setup(name = 'termcolors',
       version = '0.1',
       description = 'RGB queries on xterm-like terminals',
       packages = ['termcolors'],
-      package_dir = {'termcolors' : 'termcolors'},
       scripts = ['termcolors-demo.py']
      )
