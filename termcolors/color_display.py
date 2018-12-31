@@ -16,6 +16,8 @@
 #   along with termcolors.  If not, see
 #   <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from collections import defaultdict
 from sys import (stdin, stdout, stderr)
 
@@ -369,7 +371,8 @@ class ColorDisplay(TerminalQueryContext):
 
         '''
         if c:
-            return "%02X%02X%02X" % (c.r*0xffff/256, c.g*0xffff/256,
-                                     c.b*0xffff/256)
+            return "%02X%02X%02X" % (int(c.r*0xffff)//256,
+                                     int(c.g*0xffff)//256,
+                                     int(c.b*0xffff)//256)
         else:
             return self.rgb_placeholder
