@@ -28,7 +28,7 @@ from termcolors.colors import RGBAColor
 # Query-related error conditions
 
 class TerminalQueryError(Exception):
-    
+
     '''
     Base class for the other exceptions.
 
@@ -47,7 +47,7 @@ class TerminalSetupError(TerminalQueryError):
 
     def __init__(self, fd):
         TerminalQueryError.__init__(
-            self, 
+            self,
             ("Couldn't set up terminal on file " +
              ("descriptor %d" % fd)))
 
@@ -61,7 +61,7 @@ class NoResponseError(TerminalQueryError):
 
     def __init__(self, q):
         TerminalQueryError.__init__(
-            self, 
+            self,
             "Timeout on query " + repr(q))
 
 
@@ -72,7 +72,7 @@ class TerminalUninitializedError(TerminalQueryError):
     properly (by calling TerminalQueryContext.__enter__).
 
     '''
-    
+
     def __init__(self, fd):
         TerminalQueryError.__init__(
             self,
@@ -200,7 +200,7 @@ class TerminalQueryContext(object):
 
     def get_all_indexed_colors(self, limit, timeout=-1):
         '''
-        Query as many indexed RGB values as possible up to `limit' 
+        Query as many indexed RGB values as possible up to `limit'
         and return them all in a list. `timeout' has the same
         interpretation as in guarded_query.  A negative limit behaves
         like infinity.
@@ -218,7 +218,7 @@ class TerminalQueryContext(object):
                 if limit < 0:
                     self.num_errors -= 1
                 break
-        
+
         return colors
 
 
@@ -283,11 +283,11 @@ class TerminalQueryContext(object):
                "({nhex})/({nhex})/({nhex})").format(**vars())
 
     re_rgb = re.compile(str_rgb)
-    
-    
+
+
     def rgb_query(self, q, timeout=-1):
         '''
-        Query a color-valued terminal parameter. 
+        Query a color-valued terminal parameter.
 
         Arguments:
             q: The query code as a sequence of nonnegative integers,
@@ -301,14 +301,14 @@ class TerminalQueryContext(object):
 
         Return: the color value as an RGBAColor instance.  If the
             terminal provides an unparseable (or no) response, then None
-            will be returned.  
+            will be returned.
 
-        See 
+        See
             http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
         ("Operating System Controls") to see the various queries
         supported by xterm.  Urxvt supports some, but not all, of them,
-        and has a number of its own (see man -s7 urxvt). 
+        and has a number of its own (see man -s7 urxvt).
 
         self.__enter__ must be called prior to calling this function, or
         TerminalUninitializedError will be raised.
@@ -358,8 +358,8 @@ class TerminalQueryContext(object):
     # will take to respond to a query it does like.  However, some
     # escape sequences, like "\033[6n", will produce a predictable
     # response on *most* (but not all) terminals, and this fact can be
-    # used to test for the absence of a response to a particular query 
-    # on such terminals. 
+    # used to test for the absence of a response to a particular query
+    # on such terminals.
 
     def guarded_query(self, q, timeout=-1, flush=True):
         '''
@@ -370,7 +370,7 @@ class TerminalQueryContext(object):
             q: the query string to send to the terminal.
 
             timeout: how many milliseconds to wait for a response, a
-                negative number meaning "infinite".  
+                negative number meaning "infinite".
 
             flush: whether to discard waiting input before sending the
                 query.  It usually makes sense to do this, but note that

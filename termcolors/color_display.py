@@ -84,7 +84,7 @@ class ColorDisplay(TerminalQueryContext):
 
         # try getting the rgb value for color 0 to decide whether to
         # bother trying to query any more colors.
-        self.do_query = (self.do_query and 
+        self.do_query = (self.do_query and
                          self.get_indexed_color(0, self.timeout*2))
 
         if self.color_level >= 1:
@@ -329,7 +329,7 @@ class ColorDisplay(TerminalQueryContext):
 
     def fgcolor(self, a=None, level=-1):
         '''
-        Return a string designed to set the foreground color to `a' when 
+        Return a string designed to set the foreground color to `a' when
         printed to the terminal. None means default.
 
         '''
@@ -344,7 +344,7 @@ class ColorDisplay(TerminalQueryContext):
 
     def bgcolor(self, a=None, level=-1):
         '''
-        Return a string designed to set the background color to `a' when 
+        Return a string designed to set the background color to `a' when
         printed to the terminal. None means default.
 
         '''

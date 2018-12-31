@@ -60,7 +60,7 @@ it apparently doesn't support *any* queries, breaking
 output a color table, but without RGB values.
 
 There may be other ways to obtain RGB values for these terminals, such
-as parsing configuration files or perhaps parsing the outpuf of 
+as parsing configuration files or perhaps parsing the outpuf of
 `xrdb --query`.  We have no plans to implement any of these.
 
 ### Really, really unsupported terminals

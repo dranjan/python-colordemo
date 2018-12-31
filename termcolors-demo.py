@@ -150,7 +150,7 @@ def main():
 
         if C.num_errors > 0:
             stderr.write("Warning: not all queries succeeded\n" +
-                         "Warning:     (output contains " + 
+                         "Warning:     (output contains " +
                          "placeholders and may be inaccurate)\n")
 
 if __name__ == "__main__":
