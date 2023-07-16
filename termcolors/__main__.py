@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #   Copyright 2012 Darsh Ranjan
 #
 #   This file is part of termcolors.
@@ -22,7 +20,7 @@ from sys import (stdin, stdout, stderr, path)
 from argparse import (ArgumentParser, ArgumentError)
 from os.path import dirname
 
-from termcolors.color_display import ColorDisplay
+from .color_display import ColorDisplay
 
 ########################################################################
 # Command-line arguments

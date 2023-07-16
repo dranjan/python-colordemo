@@ -4,6 +4,13 @@
 terminals.  It includes a demo script for presenting terminal color
 schemes, complete with RGB hex codes.
 
+## Usage
+
+    python -m termcolors
+
+    # To see all available options
+    python -m termcolors --help
+
 ## Overview of functionality
 
 `termcolors` allows you to programmatically determine the RGB values of
@@ -85,7 +92,7 @@ multiple terminals attached, and you should expect crazy results if you
 do.  Thus, forwarding queries through screen or tmux is currently an
 opt-in feature (see the `screen_forward` optional argument in
 `TerminalQueryContext.__init__` or the
-`--screen-forward`/`--tmux-forward` options in `termcolors-demo.py`).
+`--screen-forward`/`--tmux-forward` command-line options).
 This will fail inside a nested screen or tmux session.
 
 (Not using the optional screen/tmux control-passthrough support, it's
@@ -109,8 +116,7 @@ supported at the moment, since those are the main focus of this project.
 `TerminalQueryContext` showing RGB queries put to use in creating color
 tables.
 
-`termcolors-demo.py`: executable Python script to show off your terminal
-color schemes
+`__main__.py`: command-line entry point.
 
 ## Credits
 
