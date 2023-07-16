@@ -31,6 +31,7 @@ probably haven't tried it.  Attempt at your own risk!
 
 - xterm
 - urxvt
+- Konsole (KDE)
 
 For these terminals, all of the query functions work, including
 foreground/background colors.
@@ -54,7 +55,6 @@ with noticeable slowness, which may be beyond our control.
 
 - apparently most other X-client terminals, including:
   - terminology (Enlightenment)
-  - konsole (KDE)
   - Eterm (Enlightenment)
 
   and others.
