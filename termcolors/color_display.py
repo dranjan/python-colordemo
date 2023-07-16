@@ -21,7 +21,7 @@ from __future__ import division
 from collections import defaultdict
 from sys import (stdin, stdout, stderr)
 
-from termcolors.terminal_query import TerminalQueryContext, TerminalQueryError
+from .terminal_query import TerminalQueryContext, TerminalQueryError
 
 
 class ColorDisplay(TerminalQueryContext):
