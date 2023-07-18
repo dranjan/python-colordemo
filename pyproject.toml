@@ -1,0 +1,13 @@
+[project]
+name = "termcolors"
+version = "0.1"
+description = "RGB queries on xterm-like terminals"
+readme = "README.md"
+requires-python = ">=3.0"
+
+[project.scripts]
+termcolors = "termcolors.__main__:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
