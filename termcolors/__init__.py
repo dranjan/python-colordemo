@@ -16,10 +16,10 @@
 #   along with termcolors.  If not, see
 #   <http://www.gnu.org/licenses/>.
 
-from termcolors.terminal_query import (TerminalQueryContext,
-                                       TerminalQueryError,
-                                       TerminalSetupError,
-                                       NoResponseError,
-                                       TerminalUninitializedError)
+from .terminal_query import (TerminalQueryContext,
+                             TerminalQueryError,
+                             TerminalSetupError,
+                             NoResponseError,
+                             TerminalUninitializedError)
 
-from termcolors.colors import RGBAColor
+from .colors import RGBAColor
