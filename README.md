@@ -1,12 +1,12 @@
 # `colordemo`
 
-<div align="center">
-    <img src="https://raw.githubusercontent.com/dranjan/python-colordemo/master/examples/colordemo-example.png">
-</div>
-
 `colordemo` is a Python package implementing RGB queries on xterm-like
 terminals.  It includes a demo script for presenting terminal color
 schemes, complete with RGB hex codes.
+
+<div align="center">
+    <img src="https://raw.githubusercontent.com/dranjan/python-colordemo/master/examples/colordemo-example.png">
+</div>
 
 ## Quick start
 
