@@ -29,9 +29,9 @@ timeout_dft = -1
 parser = ArgumentParser(
         description="Python script to show off terminal colors.",
         epilog="Run this script from the terminal whose colors " +
-               "you want to showcase.  " +
-               "For a brief synopsis of which terminal types are " +
-               "supported, see the top of the source code.")
+               "you want to showcase. " +
+               "Only xterm-like terminals are supported " +
+               "(see the README).")
 
 mode_group = parser.add_mutually_exclusive_group()
 
