@@ -20,8 +20,6 @@ determine, and with caveats if within a screen or tmux session (see
 below for more on this).  Not all terminal types are supported (see the
 next section).
 
-`colordemo` is intended to work on both Python 2.7 and Python 3.x.
-
 ## Terminal support
 
 The fundamental requirement for a terminal to be supported by `colordemo`
