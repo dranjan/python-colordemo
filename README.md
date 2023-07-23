@@ -1,7 +1,7 @@
 # `colordemo`
 
 <div align="center">
-    <img src="!https://raw.githubusercontent.com/dranjan/python-colordemo/master/examples/colordemo-example.png">
+    <img src="https://raw.githubusercontent.com/dranjan/python-colordemo/master/examples/colordemo-example.png">
 </div>
 
 `colordemo` is a Python package implementing RGB queries on xterm-like
