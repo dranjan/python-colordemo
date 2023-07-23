@@ -17,68 +17,71 @@ schemes, complete with RGB hex codes.
 some terminals' ANSI colors (or more colors, if the terminal has them).
 The functions must be run from the terminal whose colors you want to
 determine, and with caveats if within a screen or tmux session (see
-below for more on this).  Not all terminal types are supported.  At the
-very minimum, 16-color support is required.
+below for more on this).  Not all terminal types are supported (see the
+next section).
 
 `colordemo` is intended to work on both Python 2.7 and Python 3.x.
 
 ## Terminal support
 
-If a terminal isn't mentioned in one of the following subsections, we
-probably haven't tried it.  Attempt at your own risk!
+The fundamental requirement for a terminal to be supported by `colordemo`
+is for it to support the xterm-like OSC ("Operating System Command") control
+sequences, listed under "Operating System Commands" here:
+
+https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+
+(Sometimes this support can be ascertained from the documentation of
+the terminal, but often you just need to try it.)
+
+We call these terminals "xterm-like". If a terminal emulator doesn't
+support those sequences, then it won't be supported here.
+There may be other ways to obtain RGB values for these terminals, such
+as parsing configuration files or perhaps parsing the output of
+`xrdb --query`, but we have no plans to implement any of these.
+The only way to add support for a currently unsupported terminal is to
+patch the terminal with support for the OSC sequences.
+
+There are too many terminals for us to test all of them, so the lists
+below are not exhaustive. If a terminal isn't mentioned in one of the
+following subsections, attempt at your own risk!
 
 ### Fully supported terminals
 
 - xterm
 - urxvt
-- Konsole (KDE)
-
-For these terminals, all of the query functions work, including
-foreground/background colors.
-
-### Mostly supported terminals
-
-- pretty much all VTE-based terminals. This includes:
-  -  vte
-  -  Terminal (XFCE)
-  -  gnome-terminal
-  -  terminator
-  -  tilda
-
-  and many more.
-
-These are on "mostly" status because `termcolors` cannot query their
-foreground and background colors.  Everything else works, though, albeit
-with noticeable slowness, which may be beyond our control.
+- VTE-based terminals, including:
+  - vte
+  - Terminal (XFCE)
+  - gnome-terminal
+  - terminator
+  - tilda
+  - (etc.)
+- kitty
+- alacritty
+- wezterm
+- ttyd
 
 ### Unsupported terminals
 
-- apparently most other X-client terminals, including:
-  - terminology (Enlightenment)
-  - Eterm (Enlightenment)
+- Konsole-based terminals, which are buggy:
+  - Konsole
+  - yakuake
+  - (etc.)
+- terminology
+- Linux basic TTY (text mode without X)
 
-  and others.
+Some terminals (like terminology) don't seem to allow their colors to be
+queried dynamically, so all RGB queries will fail, but the failure can
+be detected. The demo script will therefore be able to output a color
+table, but without RGB values.
 
-These terminals don't seem to allow their colors to be queried
-dynamically, so all RGB queries will fail, but the failure can be
-detected.  (For terminology, a nonnegative timeout must be used, since
-it apparently doesn't support *any* queries, breaking
-`TerminalQueryContext.guarded_query`.)  The demo script can therefore
-output a color table, but without RGB values.
+Other terminals (like Konsole) seem to support the query codes but are
+extremely buggy, returning incorrect values and even segfaulting
+sometimes.
 
-There may be other ways to obtain RGB values for these terminals, such
-as parsing configuration files or perhaps parsing the outpuf of
-`xrdb --query`.  We have no plans to implement any of these.
-
-### Really, really unsupported terminals
-
-- ajaxterm
-- Linux virtual console
-
-Warning: running the demo script on the virtual console will probably
-result in garbled TTY!  You can still type `tput reset` and press Enter
-to get back to a usable console, though.  The situtation with ajaxterm
-is similar but not as bad.
+In other cases (like the basic TTY), `colordemo` will garble
+the TTY and make it unreadable. (Try `tput reset<ENTER>` to restore it
+to something usable.)
 
 ## Note regarding screen and tmux
 
