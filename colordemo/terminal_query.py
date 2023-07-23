@@ -202,6 +202,8 @@ class TerminalQueryContext(object):
             timeout: millisecond timeout, same interpretation as in
                 self.guarded_query.
 
+        Return: list of RGBAColor instances.
+
         Errors:
             TerminalUninitializedError: if this instance's context has
                 not been entered.
