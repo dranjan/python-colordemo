@@ -1,26 +1,26 @@
-# termcolors
+# `colordemo`
 
-`termcolors` is a Python module implementing RGB queries on xterm-like
+`colordemo` is a Python module implementing RGB queries on xterm-like
 terminals.  It includes a demo script for presenting terminal color
 schemes, complete with RGB hex codes.
 
 ## Usage
 
-    python -m termcolors
+    python -m colordemo
 
     # To see all available options
-    python -m termcolors --help
+    python -m colordemo --help
 
 ## Overview of functionality
 
-`termcolors` allows you to programmatically determine the RGB values of
+`colordemo` allows you to programmatically determine the RGB values of
 some terminals' ANSI colors (or more colors, if the terminal has them).
 The functions must be run from the terminal whose colors you want to
 determine, and with caveats if within a screen or tmux session (see
 below for more on this).  Not all terminal types are supported.  At the
 very minimum, 16-color support is required.
 
-`termcolors` is intended to work on both Python 2.7 and Python 3.x.
+`colordemo` is intended to work on both Python 2.7 and Python 3.x.
 
 ## Terminal support
 
