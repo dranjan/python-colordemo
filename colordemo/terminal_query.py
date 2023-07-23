@@ -28,22 +28,18 @@ from .colors import RGBAColor
 # Query-related error conditions
 
 class TerminalQueryError(Exception):
-
-    '''
+    """
     Base class for the other exceptions.
-
-    '''
+    """
 
     def __init__(self, message):
         Exception.__init__(self, message)
 
 
 class TerminalSetupError(TerminalQueryError):
-
-    '''
+    """
     We couldn't set up the terminal properly.
-
-    '''
+    """
 
     def __init__(self, fd):
         TerminalQueryError.__init__(
@@ -53,11 +49,9 @@ class TerminalSetupError(TerminalQueryError):
 
 
 class NoResponseError(TerminalQueryError):
-
-    '''
+    """
     The terminal didn't respond, or we were too impatient.
-
-    '''
+    """
 
     def __init__(self, q):
         TerminalQueryError.__init__(
@@ -66,12 +60,10 @@ class NoResponseError(TerminalQueryError):
 
 
 class TerminalUninitializedError(TerminalQueryError):
-
-    '''
+    """
     Someone tried to do something without setting up the terminal
     properly (by calling TerminalQueryContext.__enter__).
-
-    '''
+    """
 
     def __init__(self, fd):
         TerminalQueryError.__init__(
@@ -83,11 +75,9 @@ class TerminalUninitializedError(TerminalQueryError):
 ########################################################################
 
 class TerminalQueryContext(object):
-
-    '''
+    """
     Context manager for terminal RGB queries.
-
-    '''
+    """
 
     # Operating system command
     osc = "\033]"
@@ -104,13 +94,14 @@ class TerminalQueryContext(object):
     # ANSI SGR0
     reset = csi + 'm'
 
-
     def __init__(self, fd=0, screen_forward=False):
-        '''
-        fd: open file descriptor referring to the terminal we care
-        about.  The default (0) is almost always correct.
-
-        '''
+        """
+        Arguments:
+            fd: open file descriptor referring to the terminal we care
+                about. The default (0) is almost always correct.
+            screen_forward: whether to attempt to forward queries
+                through a screen or tmux session if we are in one.
+        """
         self.tc_save = None
         self.fd = fd
 
@@ -118,12 +109,10 @@ class TerminalQueryContext(object):
 
         self.screen_forward = screen_forward
 
-
     def __enter__(self):
-        '''
+        """
         Set up the terminal for queries.
-
-        '''
+        """
         self.tc_save = termios.tcgetattr(self.fd)
 
         tc = termios.tcgetattr(self.fd)
@@ -151,12 +140,10 @@ class TerminalQueryContext(object):
 
         return self
 
-
     def __exit__(self, exc_type, exc_value, traceback):
-        '''
+        """
         Reset the terminal to its original state.
-
-        '''
+        """
         self.flush_input()
 
         if self.tc_save is not None:
@@ -164,16 +151,22 @@ class TerminalQueryContext(object):
 
         del self.P
 
-
     def get_num_colors(self, timeout=-1):
-        '''
+        """
         Attempt to determine the number of colors we are able to query
-        from the terminal.  timeout is measured in milliseconds and has
-        the same interpretation as in guarded_query.  A larger timeout
-        is safer but will cause this function to take proportionally
-        more time.
+        from the terminal. A larger timeout is safer but will cause this
+        function to take proportionally more time.
 
-        '''
+        Arguments:
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Return: integer number of colors that are queryable.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         # We won't count failed queries in this function, since we're
         # guaranteed to fail a few.
         num_errors = self.num_errors
@@ -197,15 +190,21 @@ class TerminalQueryContext(object):
         self.num_errors = num_errors
         return b
 
-
     def get_all_indexed_colors(self, limit, timeout=-1):
-        '''
-        Query as many indexed RGB values as possible up to `limit'
-        and return them all in a list. `timeout' has the same
-        interpretation as in guarded_query.  A negative limit behaves
-        like infinity.
+        """
+        Query as many indexed RGB values as possible up to `limit`
+        and return them all in a list.
 
-        '''
+        Arguments:
+            limit: maximum number of colors to query, if nonnegative.
+                Negative values disable the limit.
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         colors = []
 
         k = 0
@@ -221,7 +220,6 @@ class TerminalQueryContext(object):
 
         return colors
 
-
     # Wrappers for xterm & urxvt operating system controls.
     #
     # These codes are all common to xterm and urxvt. Their responses
@@ -231,36 +229,59 @@ class TerminalQueryContext(object):
     #
     # Note: none of these functions is remotely thread-safe.
 
-
     def get_fg(self, timeout=-1):
-        '''
+        """
         Get the terminal's foreground (text) color.
 
-        '''
+        Arguments:
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Return: RGBAColor instance.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         return self.rgb_query([10], timeout)
 
-
     def get_bg(self, timeout=-1):
-        '''
+        """
         Get the terminal's background color.
 
-        '''
+        Arguments:
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Return: RGBAColor instance.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         return self.rgb_query([11], timeout)
 
-
     def get_indexed_color(self, a, timeout=-1):
-        '''
-        Get color number `a'.
+        """
+        Get color number `a`.
 
-        '''
+        Arguments:
+            a: color index to query.
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Return: RGBAColor instance.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         return self.rgb_query([4, a], timeout)
 
-
     def flush_input(self):
-        '''
+        """
         Discard any input that can be read at this moment.
-
-        '''
+        """
         while self.P.poll(0):
             os.read(self.fd, 4096)
 
@@ -284,24 +305,9 @@ class TerminalQueryContext(object):
 
     re_rgb = re.compile(str_rgb)
 
-
     def rgb_query(self, q, timeout=-1):
-        '''
+        r"""
         Query a color-valued terminal parameter.
-
-        Arguments:
-            q: The query code as a sequence of nonnegative integers,
-                i.e., [q0, q1, ...] if the escape sequence in
-                pseudo-Python is
-
-                    "\033]{q0};{q1};...;?\007"
-
-            timeout: how long to wait for a response (same
-                interpretation as in guarded_query).
-
-        Return: the color value as an RGBAColor instance.  If the
-            terminal provides an unparseable (or no) response, then None
-            will be returned.
 
         See
             http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
@@ -313,7 +319,24 @@ class TerminalQueryContext(object):
         self.__enter__ must be called prior to calling this function, or
         TerminalUninitializedError will be raised.
 
-        '''
+        Arguments:
+            q: The query code as a sequence of nonnegative integers,
+                i.e., [q0, q1, ...] if the escape sequence in
+                pseudo-Python is
+
+                    "\033]{q0};{q1};...;?\007"
+
+            timeout: millisecond timeout, same interpretation as in
+                self.guarded_query.
+
+        Return: the color value as an RGBAColor instance. If the
+            terminal provides an unparseable (or no) response, then None
+            will be returned.
+
+        Errors:
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         query = (self.osc +
                  ';'.join([str(k) for k in q]) + ';?' +
                  self.st)
@@ -354,24 +377,22 @@ class TerminalQueryContext(object):
             return RGBAColor(0.0, 0.0, 0.0, 0.0)
 
     # If a terminal sees an escape sequence it doesn't like, it will
-    # simply ignore it.  Also, it's hard to predict how long a terminal
-    # will take to respond to a query it does like.  However, some
+    # simply ignore it. Also, it's hard to predict how long a terminal
+    # will take to respond to a query it does like. However, some
     # escape sequences, like "\033[6n", will produce a predictable
     # response on *most* (but not all) terminals, and this fact can be
     # used to test for the absence of a response to a particular query
     # on such terminals.
 
     def guarded_query(self, q, timeout=-1, flush=True):
-        '''
-        Send the terminal query string `q' and return the terminal's
+        """
+        Send the terminal query string `q` and return the terminal's
         response.
 
         Arguments:
             q: the query string to send to the terminal.
-
             timeout: how many milliseconds to wait for a response, a
                 negative number meaning "infinite".
-
             flush: whether to discard waiting input before sending the
                 query.  It usually makes sense to do this, but note that
                 the terminal may still send seemingly unsolicited data
@@ -382,12 +403,10 @@ class TerminalQueryContext(object):
         Return: The terminal's response to the query as a string.
 
         Errors:
-            NoResponseError will be raised if the query times out.
-
-            TerminalUninitializedError will be raised if this instance's
-            context has not been __enter__-ed.
-
-        '''
+            NoResponseError: if the query times out.
+            TerminalUninitializedError: if this instance's context has
+                not been entered.
+        """
         if not hasattr(self, "P"):
             raise TerminalUninitializedError(self.fd)
 
