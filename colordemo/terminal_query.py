@@ -1,4 +1,4 @@
-#   Copyright 2012-2014 Darsh Ranjan, oblique
+#   Copyright 2012-2023 Darsh Ranjan, oblique
 #
 #   This file is part of termcolors.
 #

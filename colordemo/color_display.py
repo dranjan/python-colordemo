@@ -1,4 +1,4 @@
-#   Copyright 2012 Darsh Ranjan
+#   Copyright 2012-2023 Darsh Ranjan
 #
 #   This file is part of termcolors.
 #
