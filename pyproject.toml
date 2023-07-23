@@ -24,6 +24,6 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [project.urls]
-Homepage = "https://github.com/dranjan/colordemo"
-Documentation = "https://github.com/dranjan/colordemo"
-Repository = "https://github.com/dranjan/colordemo"
+Homepage = "https://github.com/dranjan/python-colordemo"
+Documentation = "https://github.com/dranjan/python-colordemo"
+Repository = "https://github.com/dranjan/python-colordemo"
