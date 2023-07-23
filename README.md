@@ -4,12 +4,47 @@
 terminals.  It includes a demo script for presenting terminal color
 schemes, complete with RGB hex codes.
 
-## Usage
+## Quick start
 
+There are many ways to run the demo script, and we will briefly describe
+them here. Note that with any of the methods below, the `colordemo`
+tool can accept command-line options. To see which options are available,
+use `--help` with any of the methods, e.g.,
+
+    pipx run colordemo --help
+
+### Using `pipx`
+
+With only an active internet connection and the `pipx` Python utility,
+the script can be run directly without installation:
+
+    pipx run colordemo
+
+Alternatively, it can also be installed explicitly and run that way:
+
+    pipx install colordemo
+    colordemo
+
+### Using `pip`
+
+The package can also be installed and run as a normal Python package
+using `pip` (preferably in a `virtualenv` environment):
+
+    pip install colordemo
+    colordemo
+
+    # Equivalent
     python -m colordemo
 
-    # To see all available options
-    python -m colordemo --help
+### From the source tree
+
+Finally, the script can be run easily from the source tree directly.
+This package has no dependencies besides Python, so no actions are
+needed besides cloning the repository.
+
+    git clone 'git@github.com:dranjan/python-colordemo.git'
+    cd python-colordemo
+    python -m colordemo
 
 ## Overview of functionality
 
