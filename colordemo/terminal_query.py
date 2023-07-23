@@ -191,7 +191,7 @@ class TerminalQueryContext(object):
         self.num_errors = num_errors
         return b
 
-    def get_all_indexed_colors(self, limit, timeout=-1):
+    def get_all_indexed_colors(self, limit=-1, timeout=-1):
         """
         Query as many indexed RGB values as possible up to `limit`
         and return them all in a list.
