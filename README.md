@@ -60,6 +60,7 @@ following subsections, attempt at your own risk!
 - alacritty
 - wezterm
 - ttyd
+- (etc.)
 
 ### Unsupported terminals
 
@@ -69,6 +70,7 @@ following subsections, attempt at your own risk!
   - (etc.)
 - terminology
 - Linux basic TTY (text mode without X)
+- (etc.)
 
 Some terminals (like terminology) don't seem to allow their colors to be
 queried dynamically, so all RGB queries will fail, but the failure can
