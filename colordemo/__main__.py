@@ -16,9 +16,8 @@
 #   along with termcolors.  If not, see
 #   <http://www.gnu.org/licenses/>.
 
-from sys import (stdin, stdout, stderr, path)
+from sys import (stdout, stderr)
 from argparse import (ArgumentParser, ArgumentError)
-from os.path import dirname
 
 from .color_display import ColorDisplay
 
@@ -102,6 +101,7 @@ parser.add_argument(
 
 ########################################################################
 
+
 def main():
     args = parser.parse_args()
 
@@ -150,6 +150,7 @@ def main():
             stderr.write("Warning: not all queries succeeded\n" +
                          "Warning:     (output contains " +
                          "placeholders and may be inaccurate)\n")
+
 
 if __name__ == "__main__":
     main()

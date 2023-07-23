@@ -27,6 +27,7 @@ from .colors import RGBAColor
 #######################################################################
 # Query-related error conditions
 
+
 class TerminalQueryError(Exception):
     """
     Base class for the other exceptions.
@@ -181,7 +182,7 @@ class TerminalQueryContext(object):
             b += b
 
         while b - a > 1:
-            c = (a + b)>>1
+            c = (a + b) >> 1
             if self.get_indexed_color(c, timeout):
                 a = c
             else:

@@ -19,9 +19,9 @@
 from __future__ import division
 
 from collections import defaultdict
-from sys import (stdin, stdout, stderr)
+from sys import stdout
 
-from .terminal_query import TerminalQueryContext, TerminalQueryError
+from .terminal_query import TerminalQueryContext
 
 
 class ColorDisplay(TerminalQueryContext):
@@ -139,7 +139,7 @@ class ColorDisplay(TerminalQueryContext):
             c = self.hiprint('   [%X/%X] ' % (a, 8 + a), c)
         stdout.write('\n')
 
-        self.show_color_table([0,8], color_order)
+        self.show_color_table([0, 8], color_order)
 
     def show_color_cube(self, n):
         """
@@ -154,7 +154,7 @@ class ColorDisplay(TerminalQueryContext):
             TerminalUninitializedError: if this instance's context has
                 not been entered.
         """
-        base = {256:6, 88:4}[n]
+        base = {256: 6, 88: 4}[n]
 
         c = None
         c = self.hiprint('[ + ]   ', c)
@@ -187,7 +187,7 @@ class ColorDisplay(TerminalQueryContext):
             TerminalUninitializedError: if this instance's context has
                 not been entered.
         """
-        start = {256:232, 88:80}[end]
+        start = {256: 232, 88: 80}[end]
         n = end - start
 
         vals = [self.get_color(a) for a in range(start, end)]
@@ -209,7 +209,7 @@ class ColorDisplay(TerminalQueryContext):
             for v in range(n):
                 stdout.write(' ')
                 stdout.write(self.fgcolor(start + v, 2))
-                stdout.write(vals[v][2*u : 2*(u + 1)])
+                stdout.write(vals[v][2*u: 2*(u + 1)])
                 stdout.write(self.fgcolor(None, 2))
             stdout.write('\n ')
         stdout.write('\n')
@@ -225,7 +225,7 @@ class ColorDisplay(TerminalQueryContext):
             TerminalUninitializedError: if this instance's context has
                 not been entered.
         """
-        self.show_color_table(range(0,n,8), range(8), n, True)
+        self.show_color_table(range(0, n, 8), range(8), n, True)
 
     def show_color_table(self, rows, cols, stop=-1, label=False):
         """
@@ -329,8 +329,8 @@ class ColorDisplay(TerminalQueryContext):
 
         Return: string representation, possibly with ANSI color codes.
         """
-        return self.fgcolor(self.hi['+'], 3) + '0' + \
-               self.fgcolor(self.hi['0'], 3) + ('%03o' % x)
+        return (self.fgcolor(self.hi['+'], 3) + '0'
+                + self.fgcolor(self.hi['0'], 3) + ('%03o' % x))
 
     def block(self, c, n=1):
         """
@@ -424,8 +424,8 @@ class ColorDisplay(TerminalQueryContext):
         Return: hex code of c, or a placeholder.
         """
         if c:
-            return "%02X%02X%02X" % (int(c.r*0xffff)//256,
-                                     int(c.g*0xffff)//256,
-                                     int(c.b*0xffff)//256)
+            return "%02X%02X%02X" % (int(c.r * 0xffff) // 256,
+                                     int(c.g * 0xffff) // 256,
+                                     int(c.b * 0xffff) // 256)
         else:
             return self.rgb_placeholder
