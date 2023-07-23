@@ -1,6 +1,6 @@
 # `colordemo`
 
-`colordemo` is a Python module implementing RGB queries on xterm-like
+`colordemo` is a Python package implementing RGB queries on xterm-like
 terminals.  It includes a demo script for presenting terminal color
 schemes, complete with RGB hex codes.
 
@@ -105,21 +105,44 @@ very apparent if you run the script with 256-color output on a screen
 session attached to a terminal with 8- or 16-color terminfo (or with
 TERM set to such).)
 
-## Overview of code
+## Python API
 
-`colors.py`: defines the `RGBAColor` class, which is currently a simple
-`collections.namedtuple`.
+For greater flexbility, the functionality of this package can also be
+accessed through its Python API. For example, this could be useful to
+create new color scheme demo scripts.
 
-`terminal_query.py`: defines `TerminalQueryContext`, the main class for
-handling queries to a terminal.  Various terminal properties can be
-queried (depending on the terminal), but only queries for RGB values are
-supported at the moment, since those are the main focus of this project.
+The primary interface is the context manager,
+`colordemo.TerminalQueryContext`. The color queries must be performed
+inside the context manager's context.
 
-`color_display.py`: defines `ColorDisplay`, a subclass of
-`TerminalQueryContext` showing RGB queries put to use in creating color
-tables.
+```Python Console
+import colordemo
 
-`__main__.py`: command-line entry point.
+with colordemo.TerminalQueryContext() as tq:
+    # Simplest method: get everything at once.
+    # This provides a list of RGBAColor instances.
+    colors = tq.get_all_indexed_colors()
+
+    # Alternatively, you can query individual colors.
+    n = tq.get_num_colors()
+    colors = [tq.get_indexed_color(k) for k in range(n)]
+
+    # The foreground and background colors need to
+    # be queried separately:
+    fg = tq.get_fg()
+    bg = tq.get_bg()
+
+# Color values are represented as instances of `RGBAColor`, which is
+# a specialization of `namedtuple`.
+(r, g, b, a) = fg
+
+# Equivalent:
+r, g, b, a = fg.r, fg.g, fg.b, fg.a
+
+# Color components are floating-point numbers in the range [0, 1].
+# To convert these to two-digit hex codes:
+r_hex = '%02x' % (int(r * 0xffff) // 256)  # etc.
+```
 
 ## Credits
 
