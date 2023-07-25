@@ -20,7 +20,6 @@ import os
 import re
 import select
 import termios
-from sys import version_info
 
 from .colors import RGBAColor
 
@@ -448,13 +447,8 @@ class TerminalQueryContext(object):
         response = ""
 
         while self.P.poll(timeout):
-            s = os.read(self.fd, 4096)
-            if version_info.major >= 3:
-                s = s.decode()
-            response += s
-
+            response += os.read(self.fd, 4096).decode()
             m = self.re_guard.match(response)
-
             if m:
                 return m.group(1)
         else:
