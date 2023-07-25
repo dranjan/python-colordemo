@@ -186,6 +186,6 @@ r_hex = '%02x' % (int(r * 0xffff) // 256)  # etc.
 
 ## Credits
 
-- dranjan (Darsh Ranjan): initial implementation
+- dranjan: main implementation
 - oblique: improved tmux support
 - Xyne: much useful discussion and review
