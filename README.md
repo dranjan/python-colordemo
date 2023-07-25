@@ -106,6 +106,7 @@ following subsections, attempt at your own risk!
   - yakuake
   - (etc.)
 - terminology
+- st (unpatched)
 - Linux basic TTY (text mode without X)
 - (etc.)
 
