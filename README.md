@@ -84,6 +84,11 @@ following subsections, attempt at your own risk!
 
 ### Fully supported terminals
 
+**Note:** a terminal being "supported" doesn't mean `colordemo` will
+work well on all versions of the terminal. For many terminals, proper
+support for the xterm-like OSC sequences was added and improved over
+time.
+
 - xterm
 - urxvt
 - VTE-based terminals, including:
@@ -93,6 +98,7 @@ following subsections, attempt at your own risk!
   - terminator
   - tilda
   - (etc.)
+- st
 - kitty
 - alacritty
 - wezterm
@@ -106,7 +112,6 @@ following subsections, attempt at your own risk!
   - yakuake
   - (etc.)
 - terminology
-- st (unpatched)
 - Linux basic TTY (text mode without X)
 - (etc.)
 

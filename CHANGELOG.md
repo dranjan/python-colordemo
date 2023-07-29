@@ -3,6 +3,8 @@
 All notable changes to this project will be documented here.
 
 ## [Unreleased]
+### Fixed
+- Support status of `st` in the documentation.
 
 ## [0.3.0] - 2023-07-29
 ### Added
@@ -10,7 +12,7 @@ All notable changes to this project will be documented here.
 - Change log.
 
 ### Removed
-- Support for older urxvt versions, now considered buggy.
+- Support for older urxvt versions, which are now considered buggy.
 
 ## [0.2.1] - 2023-07-24
 ### Added
