@@ -302,9 +302,9 @@ class TerminalQueryContext(object):
     # color to look like.  If we didn't care about urxvt, we could get
     # away with a simpler implementation here, since xterm and vte seem
     # to give pretty consistent and systematic responses.
-    str_rgb = ("\033\\]({ndec};)+rgba?:(({nhex})/)?" +
-               "({nhex})/({nhex})/({nhex})").format(**vars())
-
+    str_rgb = ("\033\\]({ndec};)+rgba?:" +
+               "({nhex})/({nhex})/({nhex})(/({nhex}))?"
+              ).format(**vars())
     re_rgb = re.compile(str_rgb)
 
     def rgb_query(self, q, timeout=-1):
@@ -360,23 +360,10 @@ class TerminalQueryContext(object):
         nd = len(m.group(4))
         u = (1 << (nd << 2)) - 1
 
-        # An "rgba"-type reply (for urxvt) is apparently actually
-        #
-        #    rgba:{alpha}/{alpha * red}/{alpha * green}/{alpha * blue}
-        #
-        # We opt to extract the actual RGB values by eliminating alpha.
-        # (In other words, the alpha value is discarded completely in
-        # the reported color value.)
+        alpha = float(int(m.group(6), 16))/u if m.group(6) else 1.0
+        (r, g, b) = (int(m.group(i), 16)/u for i in [2, 3, 4])
 
-        alpha = float(int(m.group(3), 16))/u if m.group(3) else 1.0
-
-        if alpha > 0:
-            (r, g, b) = (int(m.group(i), 16)/(alpha*u)
-                         for i in [4, 5, 6])
-
-            return RGBAColor(r, g, b, alpha)
-        else:
-            return RGBAColor(0.0, 0.0, 0.0, 0.0)
+        return RGBAColor(r, g, b, alpha)
 
     # If a terminal sees an escape sequence it doesn't like, it will
     # simply ignore it. Also, it's hard to predict how long a terminal
