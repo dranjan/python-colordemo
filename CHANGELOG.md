@@ -3,6 +3,8 @@
 All notable changes to this project will be documented here.
 
 ## [Unreleased]
+
+## [0.3.0] - 2023-07-29
 ### Added
 - Support for newer urxvt versions.
 - Change log.
@@ -31,6 +33,7 @@ All notable changes to this project will be documented here.
 
   (This code was largely written in 2012, with minor updates since then.)
 
-[Unreleased]: https://github.com/dranjan/python-colordemo/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/dranjan/python-colordemo/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/dranjan/python-colordemo/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/dranjan/python-colordemo/compare/v0.2...v0.2.1
 [0.2]: https://github.com/dranjan/python-colordemo/compare/v0.1...v0.2
