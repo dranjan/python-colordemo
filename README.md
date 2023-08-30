@@ -112,6 +112,7 @@ time.
   - yakuake
   - (etc.)
 - terminology
+- anything in Emacs (Eshell, vterm, ...)
 - Linux basic TTY (text mode without X)
 - (etc.)
 
@@ -124,7 +125,7 @@ Other terminals (like Konsole) seem to support the query codes but are
 extremely buggy, returning incorrect values and even segfaulting
 sometimes.
 
-In other cases (like the basic TTY), `colordemo` will garble
+In other cases (like older versions of the basic TTY), `colordemo` will garble
 the TTY and make it unreadable. (Try `tput reset<ENTER>` to restore it
 to something usable.)
 
