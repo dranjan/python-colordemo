@@ -103,6 +103,7 @@ time.
 - alacritty
 - wezterm
 - ttyd
+- Ghostty
 - (etc.)
 
 ### Unsupported terminals
